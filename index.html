@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Fast, local PC repair and upgrades in Roanoke, VA. Virus removal, data recovery, hardware diagnostics and more. Text or call 540-300-2577.">
+  <title>Pixel Patcher — PC Repair in Roanoke, VA</title>
+  <link rel="icon" type="image/png" href="logoblack.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    /* ── RESET & VARIABLES ── */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --black:   #000000;
+      --gold:    #C9A000;
+      --purple:  #4B2A8C;
+      --white:   #ffffff;
+      --gray:    #aaaaaa;
+      --dim:     rgba(201,160,0,0.25);
+      --card-bg: rgba(75,42,140,0.12);
+      --font-pixel: 'Press Start 2P', monospace;
+      --font-body:  'DM Sans', sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--black);
+      color: var(--white);
+      font-family: var(--font-body);
+      line-height: 1.6;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(0,0,0,0.92);
+      backdrop-filter: blur(6px);
+      border-bottom: 1px solid var(--dim);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 0.75rem 2rem;
+    }
+
+    .nav-brand {
+      font-family: var(--font-pixel);
+      font-size: 11px;
+      color: var(--gold);
+      text-decoration: none;
+      letter-spacing: 1px;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 1.5rem;
+      list-style: none;
+    }
+
+    .nav-links a {
+      font-family: var(--font-pixel);
+      font-size: 7px;
+      color: var(--gray);
+      text-decoration: none;
+      letter-spacing: 1px;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover { color: var(--gold); }
+
+    canvas { display: block; width: 100%; }
+
+    /* ── HERO ── */
+    #hero {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .hero-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 3rem 2rem 2.5rem;
+      text-align: center;
+      gap: 1rem;
+    }
+
+    .hero-logo {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      border: 3px solid var(--purple);
+      background: rgba(75,42,140,0.2);
+      padding: 12px;
+      object-fit: contain;
+      margin-bottom: 0.5rem;
+    }
+
+    .hero-headline {
+      font-family: var(--font-pixel);
+      font-size: clamp(22px, 6vw, 52px);
+      color: var(--white);
+      line-height: 1.5;
+      letter-spacing: 1px;
+    }
+
+    .hero-sub {
+      font-family: var(--font-pixel);
+      font-size: clamp(9px, 1.5vw, 13px);
+      color: var(--gold);
+      letter-spacing: 2px;
+      line-height: 1.8;
+    }
+
+    .hero-tagline {
+      font-family: var(--font-pixel);
+      font-size: 9px;
+      color: var(--gray);
+      letter-spacing: 3px;
+      opacity: 0.8;
+    }
+
+    .btn-primary {
+      display: inline-block;
+      background: var(--gold);
+      color: var(--black);
+      font-family: var(--font-pixel);
+      font-size: 10px;
+      padding: 14px 28px;
+      text-decoration: none;
+      letter-spacing: 1px;
+      margin-top: 0.5rem;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    .btn-primary:hover {
+      background: #e6b800;
+      transform: translateY(-2px);
+    }
+
+    /* ── SHARED SECTION STYLES ── */
+    .section-inner {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 4rem 2rem;
+    }
+
+    .section-title {
+      font-family: var(--font-pixel);
+      font-size: clamp(14px, 2.5vw, 20px);
+      color: var(--gold);
+      text-align: center;
+      margin-bottom: 0.5rem;
+      letter-spacing: 2px;
+    }
+
+    .section-divider {
+      width: 60%;
+      height: 2px;
+      background: linear-gradient(to right, transparent, var(--gold), var(--purple), var(--gold), transparent);
+      margin: 0.75rem auto 2.5rem;
+    }
+
+    /* ── SERVICES ── */
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1rem;
+    }
+
+    .service-card {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      border: 1px solid var(--dim);
+      border-left: 3px solid var(--gold);
+      padding: 1rem 1.25rem;
+      background: var(--card-bg);
+    }
+
+    .service-card .icon { font-size: 1.5rem; flex-shrink: 0; }
+
+    .service-card h3 {
+      font-family: var(--font-pixel);
+      font-size: 8px;
+      color: var(--white);
+      line-height: 2;
+      letter-spacing: 0.5px;
+    }
+
+    /* ── PRICING ── */
+    #pricing { background: rgba(75,42,140,0.06); }
+
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .pricing-category {
+      border: 1px solid var(--dim);
+      border-top: 3px solid var(--gold);
+      padding: 1.25rem;
+    }
+
+    .pricing-category h3 {
+      font-family: var(--font-pixel);
+      font-size: 9px;
+      color: var(--gold);
+      letter-spacing: 2px;
+      margin-bottom: 1rem;
+    }
+
+    .price-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 0.4rem 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      font-size: 0.85rem;
+      color: var(--white);
+      gap: 1rem;
+    }
+
+    .price-row:last-child { border-bottom: none; }
+
+    .price-row .price {
+      color: var(--gold);
+      white-space: nowrap;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .pricing-note {
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--gray);
+      margin-top: 2rem;
+      font-style: italic;
+    }
+
+    /* ── ABOUT ── */
+    .about-text {
+      max-width: 620px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .about-text p {
+      font-size: 1.05rem;
+      color: var(--gray);
+      line-height: 1.8;
+      margin-bottom: 1rem;
+    }
+
+    .about-text p:last-child { margin-bottom: 0; }
+
+    .about-badge {
+      display: inline-block;
+      border: 1px solid var(--dim);
+      border-left: 3px solid var(--gold);
+      background: var(--card-bg);
+      font-family: var(--font-pixel);
+      font-size: 7px;
+      color: var(--gold);
+      padding: 8px 16px;
+      letter-spacing: 2px;
+      margin-top: 1.5rem;
+    }
+
+    /* ── CONTACT ── */
+    #contact { background: rgba(75,42,140,0.06); }
+
+    .contact-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3rem;
+      align-items: start;
+    }
+
+    @media (max-width: 640px) {
+      .contact-grid { grid-template-columns: 1fr; gap: 2rem; }
+    }
+
+    .contact-info h3 {
+      font-family: var(--font-pixel);
+      font-size: 9px;
+      color: var(--gold);
+      letter-spacing: 2px;
+      margin-bottom: 1.25rem;
+    }
+
+    .contact-detail {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .contact-detail a {
+      color: var(--white);
+      text-decoration: none;
+      font-size: 0.95rem;
+      transition: color 0.2s;
+    }
+
+    .contact-detail a:hover { color: var(--gold); }
+
+    .contact-form h3 {
+      font-family: var(--font-pixel);
+      font-size: 9px;
+      color: var(--gold);
+      letter-spacing: 2px;
+      margin-bottom: 1.25rem;
+    }
+
+    .contact-form form {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .contact-form input,
+    .contact-form textarea {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--dim);
+      border-left: 3px solid var(--gold);
+      color: var(--white);
+      font-family: var(--font-body);
+      font-size: 0.9rem;
+      padding: 0.75rem 1rem;
+      width: 100%;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .contact-form input:focus,
+    .contact-form textarea:focus { border-color: var(--gold); }
+
+    .contact-form textarea { resize: vertical; min-height: 120px; }
+
+    .contact-form button {
+      background: var(--gold);
+      color: var(--black);
+      font-family: var(--font-pixel);
+      font-size: 9px;
+      padding: 14px;
+      border: none;
+      cursor: pointer;
+      letter-spacing: 1px;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    .contact-form button:hover {
+      background: #e6b800;
+      transform: translateY(-1px);
+    }
+
+    /* ── REVIEWS ── */
+    .reviews-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1rem;
+    }
+
+    .review-placeholder {
+      border: 1px dashed rgba(201,160,0,0.2);
+      padding: 1.5rem;
+      text-align: center;
+      color: rgba(255,255,255,0.15);
+      font-size: 0.85rem;
+    }
+
+    .reviews-cta {
+      text-align: center;
+      margin-top: 2rem;
+      font-size: 0.9rem;
+      color: var(--gray);
+    }
+
+    .reviews-cta a {
+      color: var(--gold);
+      text-decoration: none;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .footer-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    .footer-brand {
+      font-family: var(--font-pixel);
+      font-size: 12px;
+      color: var(--gold);
+      letter-spacing: 2px;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 1.5rem;
+      list-style: none;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .footer-links a {
+      font-family: var(--font-pixel);
+      font-size: 7px;
+      color: var(--gray);
+      text-decoration: none;
+      letter-spacing: 1px;
+    }
+
+    .footer-links a:hover { color: var(--gold); }
+
+    .footer-copy {
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.3);
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 640px) {
+      .nav-links { display: none; }
+
+      .hero-content { padding: 2rem 1rem 2rem; }
+
+      .section-inner { padding: 2.5rem 1rem; }
+
+      .pricing-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <ul class="nav-links">
+      <li><a href="#services">Services</a></li>
+      <li><a href="#pricing">Pricing</a></li>
+      <li><a href="#about">About</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+  </nav>
+
+  <section id="hero">
+    <canvas id="hero-border-top" height="56"></canvas>
+    <div class="hero-content">
+      <img class="hero-logo" src="pixelpatcherLOGO.png" alt="Pixel Patcher Logo">
+      <h1 class="hero-headline">PIXEL PATCHER</h1>
+      <p class="hero-sub">Fast, local PC repair &amp; upgrades in Roanoke, VA</p>
+      <p class="hero-tagline">FROM PIXELS TO PROCESSORS</p>
+      <a class="btn-primary" href="tel:5403002577">Text or Call: 540-300-2577</a>
+    </div>
+    <canvas id="hero-border-bottom" height="56"></canvas>
+  </section>
+
+  <section id="services">
+    <div class="section-inner">
+      <h2 class="section-title">SERVICES</h2>
+      <div class="section-divider"></div>
+      <div class="services-grid">
+        <div class="service-card">
+          <span class="icon">🔧</span>
+          <h3>SLOW COMPUTER FIXES<br>&amp; SYSTEM UPGRADES</h3>
+        </div>
+        <div class="service-card">
+          <span class="icon">🛡️</span>
+          <h3>VIRUS &amp; POPUP<br>REMOVAL</h3>
+        </div>
+        <div class="service-card">
+          <span class="icon">💾</span>
+          <h3>DATA RECOVERY<br>&amp; BACKUP</h3>
+        </div>
+        <div class="service-card">
+          <span class="icon">🖥️</span>
+          <h3>NEW PC SETUP<br>&amp; DATA TRANSFER</h3>
+        </div>
+        <div class="service-card">
+          <span class="icon">🔬</span>
+          <h3>HARDWARE<br>DIAGNOSTICS</h3>
+        </div>
+        <div class="service-card">
+          <span class="icon">🏠</span>
+          <h3>IN-HOME SERVICE<br>AVAILABLE</h3>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="pricing">
+    <div class="section-inner">
+      <h2 class="section-title">PRICING</h2>
+      <div class="section-divider"></div>
+      <div class="pricing-grid">
+
+        <div class="pricing-category">
+          <h3>DIAGNOSTIC</h3>
+          <div class="price-row"><span>Bench Diagnostic</span><span class="price">FREE</span></div>
+          <div class="price-row"><span>On-Site Diagnostic</span><span class="price">$50</span></div>
+        </div>
+
+        <div class="pricing-category">
+          <h3>SOFTWARE</h3>
+          <div class="price-row"><span>Virus / Malware Removal</span><span class="price">$60–$80</span></div>
+          <div class="price-row"><span>OS Reinstall (Clean)</span><span class="price">$80–$100</span></div>
+          <div class="price-row"><span>OS Reinstall (No Data)</span><span class="price">$60</span></div>
+          <div class="price-row"><span>Driver Updates / Optimization</span><span class="price">$40–$60</span></div>
+          <div class="price-row"><span>Password Recovery</span><span class="price">$40</span></div>
+          <div class="price-row"><span>Software Install / Setup</span><span class="price">$30–$50</span></div>
+          <div class="price-row"><span>Printer Setup</span><span class="price">$35–$50</span></div>
+          <div class="price-row"><span>Email Setup / Migration</span><span class="price">$35–$50</span></div>
+        </div>
+
+        <div class="pricing-category">
+          <h3>HARDWARE</h3>
+          <div class="price-row"><span>RAM Upgrade (labor only)</span><span class="price">$30–$40</span></div>
+          <div class="price-row"><span>SSD / HDD Replacement</span><span class="price">$50–$70</span></div>
+          <div class="price-row"><span>SSD / HDD Clone</span><span class="price">$40–$60</span></div>
+          <div class="price-row"><span>Thermal Paste / Cleaning</span><span class="price">$40–$60</span></div>
+        </div>
+
+        <div class="pricing-category">
+          <h3>ON-SITE / HOUSE CALLS</h3>
+          <div class="price-row"><span>Travel Fee (within 10 miles)</span><span class="price">FREE</span></div>
+          <div class="price-row"><span>Additional Mileage</span><span class="price">$1/mile</span></div>
+        </div>
+
+        <div class="pricing-category">
+          <h3>DATA SERVICES</h3>
+          <div class="price-row"><span>Data Backup (to client drive)</span><span class="price">$30–$50</span></div>
+          <div class="price-row"><span>Data Recovery (healthy drive)</span><span class="price">$60–$100+</span></div>
+          <div class="price-row"><span>Data Recovery (failing drive)</span><span class="price">$100–$150+</span></div>
+        </div>
+
+      </div>
+      <p class="pricing-note">Parts billed at cost + 15–20% markup. Client approval required before ordering. 1 hour minimum on all on-site visits.</p>
+    </div>
+  </section>
+
+  <section id="about">
+    <div class="section-inner">
+      <h2 class="section-title">ABOUT</h2>
+      <div class="section-divider"></div>
+      <div class="about-text">
+        <p>
+          Hi, I'm Jason, a Blue Ridge native and the person behind Pixel Patcher.
+          When I unwrapped my first computer for Christmas in 1995, it sparked a lifelong curiosity that never left me.
+          I started Pixel Patcher because our community deserves a repair option that delivers real value and keeps support local.
+          No franchises. No runaround. Just straightforward computer help from someone who actually lives here.
+        </p>
+        <div class="about-badge">LOCALLY OWNED &amp; OPERATED · ROANOKE, VA</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="contact">
+    <div class="section-inner">
+      <h2 class="section-title">CONTACT</h2>
+      <div class="section-divider"></div>
+      <div class="contact-grid">
+
+        <div class="contact-info">
+          <h3>GET IN TOUCH</h3>
+          <div class="contact-detail">
+            <a href="tel:5403002577">📞 Text or Call: 540-300-2577</a>
+            <a href="mailto:jason@pixelpatcher.com">✉️ jason@pixelpatcher.com</a>
+            <a href="https://www.pixelpatcher.com">🌐 www.pixelpatcher.com</a>
+            <span>📍 Roanoke, VA — Serving surrounding areas</span>
+          </div>
+          <img src="QR-pixelpatcher.png" alt="Scan to visit pixelpatcher.com" style="width:120px; height:120px;">
+        </div>
+
+        <div class="contact-form">
+          <h3>SEND A MESSAGE</h3>
+          <!-- netlify attribute enables Netlify Forms — do not remove -->
+          <form name="contact" method="POST" netlify>
+            <input type="hidden" name="form-name" value="contact">
+            <input type="text"  name="name"    placeholder="Your Name"         required>
+            <input type="tel"   name="phone"   placeholder="Your Phone Number" required>
+            <textarea           name="message" placeholder="What's going on with your computer?" required></textarea>
+            <button type="submit">SEND MESSAGE &#9658;</button>
+          </form>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <section id="reviews">
+    <div class="section-inner">
+      <h2 class="section-title">REVIEWS</h2>
+      <div class="section-divider"></div>
+      <div class="reviews-grid">
+        <div class="review-placeholder">★★★★★<br><br>Reviews coming soon</div>
+        <div class="review-placeholder">★★★★★<br><br>Reviews coming soon</div>
+        <div class="review-placeholder">★★★★★<br><br>Reviews coming soon</div>
+      </div>
+      <p class="reviews-cta">
+        <!-- Replace href with your Google Business Profile URL once verified -->
+        <a href="https://www.google.com/maps" target="_blank">Leave us a Google Review &#9658;</a>
+      </p>
+    </div>
+  </section>
+
+  <footer>
+    <canvas id="footer-border" height="56"></canvas>
+    <div class="footer-content">
+      <div class="footer-brand">PIXEL PATCHER</div>
+      <ul class="footer-links">
+        <li><a href="#services">Services</a></li>
+        <li><a href="#pricing">Pricing</a></li>
+        <li><a href="#about">About</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+      <p class="footer-copy">© 2026 Pixel Patcher · Roanoke, VA · jason@pixelpatcher.com</p>
+    </div>
+  </footer>
+
+<script>
+  function seededRand(seed) {
+    let s = seed;
+    return function() {
+      s = (s * 1664525 + 1013904223) & 0xffffffff;
+      return (s >>> 0) / 0xffffffff;
+    };
+  }
+
+  function drawPixelBorder(id, height, seedVal) {
+    const canvas = document.getElementById(id);
+    if (!canvas) return;
+    const dpr = window.devicePixelRatio || 1;
+    const W = canvas.offsetWidth || window.innerWidth;
+    canvas.width  = W * dpr;
+    canvas.height = height * dpr;
+    canvas.style.height = height + 'px';
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+    const colors = ['#C9A000','#C9A000','#4B2A8C','#4B2A8C','#ffffff','#000000'];
+    const px = 14;
+    const rand = seededRand(seedVal);
+    const cols = Math.ceil(W / px);
+    const rows = Math.ceil(height / px);
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        ctx.fillStyle = colors[Math.floor(rand() * colors.length)];
+        ctx.fillRect(c * px, r * px, px, px);
+      }
+    }
+  }
+
+  // Called after all sections are built — list all canvas IDs here
+  function initBorders() {
+    drawPixelBorder('hero-border-top',    56, 42);
+    drawPixelBorder('hero-border-bottom', 56, 77);
+    drawPixelBorder('footer-border',      56, 99);
+  }
+
+  window.addEventListener('load', initBorders);
+  window.addEventListener('resize', initBorders);
+</script>
+</body>
+</html>
