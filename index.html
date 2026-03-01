@@ -253,6 +253,16 @@
 
     .price-row:last-child { border-bottom: none; }
 
+    .price-row.hourly-rate {
+      border-bottom: 1px solid var(--dim);
+      margin-bottom: 0.5rem;
+      padding-bottom: 0.5rem;
+    }
+
+    .price-row.hourly-rate .price {
+      font-size: 1rem;
+    }
+
     .price-row .price {
       color: var(--gold);
       white-space: nowrap;
@@ -662,22 +672,33 @@
 
         <div class="pricing-category">
           <h3>SOFTWARE</h3>
-          <div class="price-row"><span>Virus / Malware Removal</span><span class="price">$60–$80</span></div>
-          <div class="price-row"><span>OS Reinstall (Clean)</span><span class="price">$80–$100</span></div>
-          <div class="price-row"><span>OS Reinstall (No Data)</span><span class="price">$60</span></div>
-          <div class="price-row"><span>Driver Updates / Optimization</span><span class="price">$50–$70</span></div>
-          <div class="price-row"><span>Password Recovery</span><span class="price">$50</span></div>
-          <div class="price-row"><span>Software Install / Setup</span><span class="price">$60–$80</span></div>
-          <div class="price-row"><span>Printer Setup</span><span class="price">$50–$75</span></div>
-          <div class="price-row"><span>Email Setup / Migration</span><span class="price">$50–$75</span></div>
+          <div class="price-row hourly-rate"><span>Per Hour</span><span class="price">$60 / hr</span></div>
+          <div class="price-row"><span>Virus &amp; Malware Removal</span></div>
+          <div class="price-row"><span>OS Reinstall / Clean Install</span></div>
+          <div class="price-row"><span>Tune-Up &amp; Optimization</span></div>
+          <div class="price-row"><span>Password Recovery</span></div>
+          <div class="price-row"><span>Software Install &amp; Setup</span></div>
+          <div class="price-row"><span>Printer Setup</span></div>
+          <div class="price-row"><span>Email Setup &amp; Migration</span></div>
+          <div class="price-row"><span>Data Backup &amp; Transfer</span></div>
         </div>
 
         <div class="pricing-category">
-          <h3>HARDWARE</h3>
-          <div class="price-row"><span>RAM Upgrade (labor only)</span><span class="price">$40–$50</span></div>
-          <div class="price-row"><span>SSD / HDD Replacement</span><span class="price">$50–$70</span></div>
-          <div class="price-row"><span>SSD / HDD Clone</span><span class="price">$40–$60</span></div>
-          <div class="price-row"><span>Thermal Paste / Cleaning</span><span class="price">$40–$60</span></div>
+          <h3>HARDWARE — WINDOWS</h3>
+          <div class="price-row hourly-rate"><span>Per Hour</span><span class="price">$75 / hr</span></div>
+          <div class="price-row"><span>RAM Upgrade</span></div>
+          <div class="price-row"><span>SSD / HDD Replacement</span></div>
+          <div class="price-row"><span>Drive Cloning</span></div>
+          <div class="price-row"><span>Thermal Paste &amp; Cleaning</span></div>
+          <div class="price-row"><span>Hardware Diagnostics</span></div>
+        </div>
+
+        <div class="pricing-category">
+          <h3>HARDWARE — MAC</h3>
+          <div class="price-row hourly-rate"><span>Per Hour</span><span class="price">$85 / hr</span></div>
+          <div class="price-row"><span>SSD Replacement</span></div>
+          <div class="price-row"><span>Thermal Paste &amp; Cleaning</span></div>
+          <div class="price-row"><span>Hardware Diagnostics</span></div>
         </div>
 
         <div class="pricing-category">
@@ -686,12 +707,7 @@
           <div class="price-row"><span>Additional Mileage</span><span class="price">$1/mile</span></div>
         </div>
 
-        <div class="pricing-category">
-          <h3>DATA SERVICES</h3>
-          <div class="price-row"><span>Data Backup (to client drive)</span><span class="price">$50–$75</span></div>
-          <div class="price-row"><span>Data Recovery (healthy drive)</span><span class="price">$60–$100+</span></div>
-          <div class="price-row"><span>Data Recovery (failing drive)</span><span class="price">$100–$150+</span></div>
-        </div>
+
 
       </div>
       <p class="pricing-note">Parts billed at cost + 15–20% markup. Client approval required before ordering. 1 hour minimum on all on-site visits.</p>
