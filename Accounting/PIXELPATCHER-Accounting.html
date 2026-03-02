@@ -285,7 +285,10 @@ function renderSection(name) {
 // ── Storage ──────────────────────────────────────────────────────────────────
 const DB = {
   get:  key       => JSON.parse(localStorage.getItem(key) || 'null'),
-  set:  (key, v)  => localStorage.setItem(key, JSON.stringify(v)),
+  set:  (key, v)  => {
+    localStorage.setItem(key, JSON.stringify(v));
+    firestoreSet(key, v);
+  },
   push: (key, obj) => { const a = DB.get(key) || []; a.push(obj); DB.set(key, a); },
   del:  (key, id)  => DB.set(key, (DB.get(key) || []).filter(x => x.id !== id)),
 };
