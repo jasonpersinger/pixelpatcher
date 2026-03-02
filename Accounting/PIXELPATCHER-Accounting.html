@@ -116,6 +116,23 @@
   </style>
 </head>
 <body>
+<div id="signin-overlay" style="display:flex; position:fixed; inset:0; background:#000;
+     z-index:1000; align-items:center; justify-content:center; flex-direction:column;">
+  <div style="font-family:var(--font-pixel); font-size:9px; color:var(--accent);
+              letter-spacing:1px; margin-bottom:12px;">&#9632; PIXEL PATCHER</div>
+  <div style="font-size:12px; color:var(--muted); margin-bottom:40px;
+              font-family:var(--font);">Accounting</div>
+  <button onclick="signInWithGoogle()"
+    style="background:var(--accent); color:#000; border:none; padding:14px 32px;
+           font-size:14px; font-weight:700; border-radius:var(--radius); cursor:pointer;
+           font-family:var(--font);">
+    Sign in with Google
+  </button>
+  <div id="signin-error"
+    style="color:var(--negative); font-size:12px; margin-top:16px; font-family:var(--font);">
+  </div>
+</div>
+
 <div id="app">
   <aside id="sidebar">
     <div class="logo">&#9632; PIXEL PATCHER</div>
