@@ -173,6 +173,86 @@ firebase.initializeApp(firebaseConfig);
 const fsdb   = firebase.firestore();
 const fsauth = firebase.auth();
 
+// ── Auth ─────────────────────────────────────────────────────────────────────
+const FS_KEYS = ['pp_settings','pp_income','pp_expenses','pp_mileage','pp_jobs','pp_seeded'];
+
+function showSignInOverlay() {
+  document.getElementById('signin-overlay').style.display = 'flex';
+}
+function hideSignInOverlay() {
+  document.getElementById('signin-overlay').style.display = 'none';
+}
+
+function signInWithGoogle() {
+  document.getElementById('signin-error').textContent = '';
+  const provider = new firebase.auth.GoogleAuthProvider();
+  fsauth.signInWithPopup(provider).catch(() => {
+    document.getElementById('signin-error').textContent = 'Sign-in failed. Please try again.';
+  });
+}
+
+// ── Sync status ───────────────────────────────────────────────────────────────
+function updateSyncStatus(state) {
+  const el = document.getElementById('sync-status');
+  if (!el) return;
+  const span = document.createElement('span');
+  if (state === 'syncing') {
+    span.style.color = 'var(--accent)';
+    span.textContent = '\u27F3 Syncing';
+  } else if (state === 'synced') {
+    span.style.color = 'var(--positive)';
+    span.textContent = '\u25CF Synced';
+  } else {
+    span.style.color = 'var(--muted)';
+    span.textContent = '\u25CB Offline';
+  }
+  el.textContent = '';
+  el.appendChild(span);
+}
+
+// ── Firestore write helper ────────────────────────────────────────────────────
+function firestoreSet(key, value) {
+  const user = fsauth.currentUser;
+  if (!user || !FS_KEYS.includes(key)) return;
+  updateSyncStatus('syncing');
+  fsdb.collection('users').doc(user.uid).collection('data').doc(key)
+    .set({ value })
+    .then(() => updateSyncStatus('synced'))
+    .catch(err => {
+      console.warn('Firestore write failed:', err);
+      updateSyncStatus('offline');
+    });
+}
+
+// ── Load from Firestore on login ──────────────────────────────────────────────
+async function loadFromFirestore(uid) {
+  updateSyncStatus('syncing');
+  try {
+    const snap = await fsdb.collection('users').doc(uid).collection('data').get();
+    if (!snap.empty) {
+      snap.forEach(doc => {
+        localStorage.setItem(doc.id, JSON.stringify(doc.data().value));
+      });
+    }
+    updateSyncStatus('synced');
+  } catch (err) {
+    console.warn('Firestore load failed, using localStorage:', err);
+    updateSyncStatus('offline');
+  }
+}
+
+// ── Auth state handler ────────────────────────────────────────────────────────
+fsauth.onAuthStateChanged(async user => {
+  if (user) {
+    hideSignInOverlay();
+    await loadFromFirestore(user.uid);
+    seedData();
+    renderDashboard();
+  } else {
+    showSignInOverlay();
+  }
+});
+
 // ── XSS safety: all user strings escaped before innerHTML insertion ──────────
 function esc(str) {
   if (str === null || str === undefined) return '';
@@ -258,7 +338,6 @@ function seedData() {
   DB.set('pp_jobs',    []);
   DB.set('pp_seeded',  true);
 }
-seedData();
 
 // ── Settings section ─────────────────────────────────────────────────────────
 function renderSettings() {
@@ -851,8 +930,7 @@ function importJSON() {
   input.click();
 }
 
-// Initial render
-renderDashboard();
+// Initial render triggered by fsauth.onAuthStateChanged above
 </script>
 </body>
 </html>
