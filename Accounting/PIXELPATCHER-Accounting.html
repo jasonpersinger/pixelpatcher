@@ -6,6 +6,10 @@
   <title>Pixel Patcher — Accounting</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=DM+Sans:wght@400;700&display=swap" rel="stylesheet">
+  <!-- Firebase SDK (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -139,6 +143,19 @@
   </main>
 </div>
 <script>
+// ── Firebase init ─────────────────────────────────────────────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyD9DXFXJEudx4ODE-P1yYxAniM4jtqytJY",
+  authDomain: "pixelpatcher-accounting.firebaseapp.com",
+  projectId: "pixelpatcher-accounting",
+  storageBucket: "pixelpatcher-accounting.firebasestorage.app",
+  messagingSenderId: "1070850498937",
+  appId: "1:1070850498937:web:774c2fb89d1da372a00fa8"
+};
+firebase.initializeApp(firebaseConfig);
+const fsdb   = firebase.firestore();
+const fsauth = firebase.auth();
+
 // ── XSS safety: all user strings escaped before innerHTML insertion ──────────
 function esc(str) {
   if (str === null || str === undefined) return '';
