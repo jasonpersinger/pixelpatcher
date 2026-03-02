@@ -4,13 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pixel Patcher — Accounting</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=DM+Sans:wght@400;700&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg: #0a0a0f; --sidebar: #111118; --card: #1a1a24; --border: #2a2a38;
-      --accent: #4f8ef7; --positive: #22c55e; --negative: #ef4444;
-      --warning: #f59e0b; --text: #e2e8f0; --muted: #64748b;
-      --radius: 8px; --font: 'Segoe UI', system-ui, sans-serif;
+      --bg: #000000; --sidebar: #0a0a0a; --card: #141410; --border: #2a2410;
+      --accent: #C9A000; --positive: #22c55e; --negative: #ef4444;
+      --warning: #4B2A8C; --text: #EDE8DC; --muted: #7a6a50;
+      --radius: 8px; --font: 'DM Sans', 'Segoe UI', system-ui, sans-serif;
+      --font-pixel: 'Press Start 2P', 'Courier New', monospace;
     }
     body { background: var(--bg); color: var(--text); font-family: var(--font); height: 100vh; }
     #app { display: flex; height: 100vh; }
@@ -19,8 +22,8 @@
       border-right: 1px solid var(--border); display: flex;
       flex-direction: column; padding: 20px 12px;
     }
-    .logo { font-weight: 700; font-size: 13px; letter-spacing: 2px;
-            color: var(--accent); margin-bottom: 28px; padding: 0 4px; }
+    .logo { font-family: var(--font-pixel); font-size: 8px; letter-spacing: 1px;
+            color: var(--accent); margin-bottom: 28px; padding: 0 4px; line-height: 1.6; }
     nav { display: flex; flex-direction: column; gap: 4px; flex: 1; }
     .nav-btn {
       background: none; border: none; color: var(--muted); text-align: left;
@@ -28,7 +31,7 @@
       font-size: 14px; font-family: var(--font); transition: all 0.15s;
     }
     .nav-btn:hover { background: var(--card); color: var(--text); }
-    .nav-btn.active { background: var(--accent); color: #fff; }
+    .nav-btn.active { background: var(--accent); color: #000; font-weight: 700; }
     .sidebar-footer { display: flex; flex-direction: column; gap: 6px;
                       padding-top: 16px; border-top: 1px solid var(--border); margin-top: 16px; }
     .sidebar-footer button {
@@ -40,7 +43,7 @@
     #main { flex: 1; overflow-y: auto; padding: 28px 32px; }
     .section { display: none; }
     .section.active { display: block; }
-    .page-title { font-size: 22px; font-weight: 700; margin-bottom: 24px; }
+    .page-title { font-size: 18px; font-weight: 700; margin-bottom: 24px; color: var(--accent); letter-spacing: 0.5px; }
     .card { background: var(--card); border: 1px solid var(--border);
             border-radius: var(--radius); padding: 20px; }
     .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
@@ -63,13 +66,13 @@
       border-radius: var(--radius); padding: 9px 12px; font-size: 14px;
       font-family: var(--font); outline: none;
     }
-    .form-group input:focus, .form-group select:focus { border-color: var(--accent); }
+    .form-group input:focus, .form-group select:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(201,160,0,0.15); }
     .form-group textarea { resize: vertical; min-height: 60px; }
     .btn { border: none; border-radius: var(--radius); padding: 9px 18px;
            font-size: 14px; cursor: pointer; font-family: var(--font);
            font-weight: 500; transition: opacity 0.15s; }
     .btn:hover { opacity: 0.85; }
-    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary { background: var(--accent); color: #000; font-weight: 700; }
     .btn-success { background: var(--positive); color: #fff; }
     .btn-danger  { background: var(--negative); color: #fff; font-size: 12px; padding: 5px 10px; }
     .btn-ghost   { background: var(--card); border: 1px solid var(--border); color: var(--text); }
