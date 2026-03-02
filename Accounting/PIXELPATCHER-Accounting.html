@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pixel Patcher — Accounting</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0a0a0f; --sidebar: #111118; --card: #1a1a24; --border: #2a2a38;
+      --accent: #4f8ef7; --positive: #22c55e; --negative: #ef4444;
+      --warning: #f59e0b; --text: #e2e8f0; --muted: #64748b;
+      --radius: 8px; --font: 'Segoe UI', system-ui, sans-serif;
+    }
+    body { background: var(--bg); color: var(--text); font-family: var(--font); height: 100vh; }
+    #app { display: flex; height: 100vh; }
+    #sidebar {
+      width: 185px; min-width: 185px; background: var(--sidebar);
+      border-right: 1px solid var(--border); display: flex;
+      flex-direction: column; padding: 20px 12px;
+    }
+    .logo { font-weight: 700; font-size: 13px; letter-spacing: 2px;
+            color: var(--accent); margin-bottom: 28px; padding: 0 4px; }
+    nav { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+    .nav-btn {
+      background: none; border: none; color: var(--muted); text-align: left;
+      padding: 10px 12px; border-radius: var(--radius); cursor: pointer;
+      font-size: 14px; font-family: var(--font); transition: all 0.15s;
+    }
+    .nav-btn:hover { background: var(--card); color: var(--text); }
+    .nav-btn.active { background: var(--accent); color: #fff; }
+    .sidebar-footer { display: flex; flex-direction: column; gap: 6px;
+                      padding-top: 16px; border-top: 1px solid var(--border); margin-top: 16px; }
+    .sidebar-footer button {
+      background: var(--card); border: 1px solid var(--border); color: var(--muted);
+      border-radius: var(--radius); padding: 7px; font-size: 12px; cursor: pointer;
+      font-family: var(--font);
+    }
+    .sidebar-footer button:hover { border-color: var(--accent); color: var(--text); }
+    #main { flex: 1; overflow-y: auto; padding: 28px 32px; }
+    .section { display: none; }
+    .section.active { display: block; }
+    .page-title { font-size: 22px; font-weight: 700; margin-bottom: 24px; }
+    .card { background: var(--card); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 20px; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+    .kpi-card { background: var(--card); border: 1px solid var(--border);
+                border-radius: var(--radius); padding: 18px 20px; }
+    .kpi-label { font-size: 11px; color: var(--muted); text-transform: uppercase;
+                 letter-spacing: 1px; margin-bottom: 8px; }
+    .kpi-value { font-size: 26px; font-weight: 700; }
+    .kpi-sub   { font-size: 11px; color: var(--muted); margin-top: 4px; }
+    .kpi-positive { color: var(--positive); }
+    .kpi-negative { color: var(--negative); }
+    .kpi-accent   { color: var(--accent); }
+    .kpi-warning  { color: var(--warning); }
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+                 gap: 12px; margin-bottom: 16px; }
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
+    .form-group label { font-size: 12px; color: var(--muted); }
+    .form-group input, .form-group select, .form-group textarea {
+      background: var(--bg); border: 1px solid var(--border); color: var(--text);
+      border-radius: var(--radius); padding: 9px 12px; font-size: 14px;
+      font-family: var(--font); outline: none;
+    }
+    .form-group input:focus, .form-group select:focus { border-color: var(--accent); }
+    .form-group textarea { resize: vertical; min-height: 60px; }
+    .btn { border: none; border-radius: var(--radius); padding: 9px 18px;
+           font-size: 14px; cursor: pointer; font-family: var(--font);
+           font-weight: 500; transition: opacity 0.15s; }
+    .btn:hover { opacity: 0.85; }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-success { background: var(--positive); color: #fff; }
+    .btn-danger  { background: var(--negative); color: #fff; font-size: 12px; padding: 5px 10px; }
+    .btn-ghost   { background: var(--card); border: 1px solid var(--border); color: var(--text); }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { text-align: left; padding: 10px 12px; color: var(--muted); font-size: 11px;
+         text-transform: uppercase; letter-spacing: 0.5px;
+         border-bottom: 1px solid var(--border); font-weight: 500; }
+    td { padding: 11px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+    .badge { display: inline-block; padding: 3px 9px; border-radius: 20px;
+             font-size: 11px; font-weight: 600; }
+    .badge-pending  { background: rgba(245,158,11,0.15);  color: var(--warning); }
+    .badge-progress { background: rgba(79,142,247,0.15);  color: var(--accent); }
+    .badge-complete { background: rgba(34,197,94,0.15);   color: var(--positive); }
+    .badge-awaiting { background: rgba(100,116,139,0.15); color: var(--muted); }
+    .badge-closed   { background: rgba(100,116,139,0.10); color: var(--muted); }
+    .section-header { display: flex; align-items: center; justify-content: space-between;
+                      margin-bottom: 20px; }
+    .totals-bar { display: flex; gap: 24px; margin-bottom: 20px; background: var(--card);
+                  border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 20px; }
+    .total-item label { font-size: 11px; color: var(--muted); display: block; margin-bottom: 3px; }
+    .total-item span  { font-size: 18px; font-weight: 700; }
+    .add-form { background: var(--card); border: 1px solid var(--border);
+                border-radius: var(--radius); padding: 20px; margin-bottom: 20px; display: none; }
+    .add-form.open { display: block; }
+    .chart-bar-wrap { display: flex; align-items: flex-end; gap: 6px;
+                      height: 140px; padding-bottom: 4px; }
+    .chart-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    .chart-col-bars { flex: 1; width: 100%; display: flex;
+                      flex-direction: column; justify-content: flex-end; gap: 2px; }
+    .bar-income, .bar-expense { width: 100%; border-radius: 3px 3px 0 0; min-height: 0; }
+    .bar-income  { background: var(--positive); }
+    .bar-expense { background: var(--negative); }
+    .chart-label { font-size: 10px; }
+  </style>
+</head>
+<body>
+<div id="app">
+  <aside id="sidebar">
+    <div class="logo">&#9632; PIXEL PATCHER</div>
+    <nav>
+      <button class="nav-btn active" data-section="dashboard">Dashboard</button>
+      <button class="nav-btn" data-section="jobs">Jobs</button>
+      <button class="nav-btn" data-section="invoice">Invoice</button>
+      <button class="nav-btn" data-section="expenses">Expenses</button>
+      <button class="nav-btn" data-section="mileage">Mileage</button>
+      <button class="nav-btn" data-section="settings">Settings</button>
+    </nav>
+    <div class="sidebar-footer">
+      <button onclick="exportCSV()">Export CSV</button>
+      <button onclick="exportJSON()">Backup JSON</button>
+      <button onclick="importJSON()">Restore JSON</button>
+    </div>
+  </aside>
+  <main id="main">
+    <section id="dashboard" class="section active"></section>
+    <section id="jobs"      class="section"></section>
+    <section id="invoice"   class="section"></section>
+    <section id="expenses"  class="section"></section>
+    <section id="mileage"   class="section"></section>
+    <section id="settings"  class="section"></section>
+  </main>
+</div>
+<script>
+// ── XSS safety: all user strings escaped before innerHTML insertion ──────────
+function esc(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+// ── Navigation ───────────────────────────────────────────────────────────────
+document.querySelectorAll('.nav-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    btn.classList.add('active');
+    const id = btn.dataset.section;
+    document.getElementById(id).classList.add('active');
+    renderSection(id);
+  });
+});
+
+function renderSection(name) {
+  if (name === 'dashboard') renderDashboard();
+  else if (name === 'jobs')     renderJobs();
+  else if (name === 'expenses') renderExpenses();
+  else if (name === 'mileage')  renderMileage();
+  else if (name === 'settings') renderSettings();
+  else if (name === 'invoice')  renderInvoice();
+}
+
+// ── Storage ──────────────────────────────────────────────────────────────────
+const DB = {
+  get:  key       => JSON.parse(localStorage.getItem(key) || 'null'),
+  set:  (key, v)  => localStorage.setItem(key, JSON.stringify(v)),
+  push: (key, obj) => { const a = DB.get(key) || []; a.push(obj); DB.set(key, a); },
+  del:  (key, id)  => DB.set(key, (DB.get(key) || []).filter(x => x.id !== id)),
+};
+
+const uid   = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const today = () => new Date().toISOString().slice(0, 10);
+const fmt   = n => '$' + Number(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+// ── Constants ────────────────────────────────────────────────────────────────
+const EXPENSE_CATS = ['Tools & Equipment','Marketing','Licenses & Permits',
+                      'Software','Insurance','Vehicle','Parts (resale)','Misc'];
+const PAY_METHODS  = ['Cash','Venmo','CashApp','Square','Check','Card','Transfer'];
+const JOB_STATUSES = ['Pending','In Progress','Complete','Awaiting Parts','Closed'];
+
+function optionsHTML(arr, selected = '') {
+  return arr.map(v =>
+    `<option value="${esc(v)}"${v === selected ? ' selected' : ''}>${esc(v)}</option>`
+  ).join('');
+}
+
+function toggleForm(id) {
+  document.getElementById(id).classList.toggle('open');
+}
+
+// ── Settings ─────────────────────────────────────────────────────────────────
+function defaultSettings() {
+  return { businessName: 'Pixel Patcher', phone: '540-300-2577',
+           website: 'pixelpatcher.com', address: '', irsRate: 0.70, taxReserve: 0.25 };
+}
+function getSettings() { return DB.get('pp_settings') || defaultSettings(); }
+
+// ── Seed data (runs once) ────────────────────────────────────────────────────
+function seedData() {
+  if (DB.get('pp_seeded')) return;
+  DB.set('pp_settings', defaultSettings());
+  DB.set('pp_income', [{
+    id: 'seed-1', date: '2026-02-26', type: 'Owner Contribution', category: 'Capital',
+    description: 'Initial business funding', amount: 200, paymentMethod: 'Transfer',
+    notes: 'Seed money from personal funds',
+  }]);
+  DB.set('pp_expenses', [
+    { id: 'seed-2', date: '2026-02-26', category: 'Licenses & Permits',
+      description: 'City of Roanoke business license', vendor: 'City of Roanoke',
+      amount: 50, paymentMethod: 'Check', notes: 'Annual renewal due March 1' },
+    { id: 'seed-3', date: '2026-02-26', category: 'Insurance',
+      description: 'General Liability Insurance - Feb', vendor: 'Next Insurance',
+      amount: 31.25, paymentMethod: 'Card', notes: 'Monthly recurring ~$31.25/mo' },
+  ]);
+  DB.set('pp_mileage', []);
+  DB.set('pp_jobs',    []);
+  DB.set('pp_seeded',  true);
+}
+seedData();
+
+// ── Settings section ─────────────────────────────────────────────────────────
+function renderSettings() {
+  const s = getSettings();
+  document.getElementById('settings').innerHTML = `
+    <div class="page-title">Settings</div>
+    <div class="card" style="max-width:600px">
+      <div class="form-grid">
+        <div class="form-group"><label>Business Name</label>
+          <input id="s-name" value="${esc(s.businessName)}"></div>
+        <div class="form-group"><label>Phone</label>
+          <input id="s-phone" value="${esc(s.phone)}"></div>
+        <div class="form-group"><label>Website</label>
+          <input id="s-website" value="${esc(s.website)}"></div>
+        <div class="form-group"><label>Address</label>
+          <input id="s-address" value="${esc(s.address)}"></div>
+        <div class="form-group"><label>IRS Mileage Rate ($/mile)</label>
+          <input type="number" step="0.01" id="s-irs" value="${esc(s.irsRate)}"></div>
+        <div class="form-group"><label>Tax Reserve %</label>
+          <input type="number" step="1" id="s-tax" value="${Math.round(s.taxReserve * 100)}"></div>
+      </div>
+      <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+    </div>
+  `;
+}
+
+function saveSettings() {
+  DB.set('pp_settings', {
+    businessName: document.getElementById('s-name').value,
+    phone:        document.getElementById('s-phone').value,
+    website:      document.getElementById('s-website').value,
+    address:      document.getElementById('s-address').value,
+    irsRate:      parseFloat(document.getElementById('s-irs').value) || 0.70,
+    taxReserve:   (parseFloat(document.getElementById('s-tax').value) || 25) / 100,
+  });
+  alert('Settings saved.');
+}
+
+// ── Expenses section ─────────────────────────────────────────────────────────
+function renderExpenses() {
+  const expenses = DB.get('pp_expenses') || [];
+  const total = expenses.reduce((s, e) => s + Number(e.amount), 0);
+  document.getElementById('expenses').innerHTML = `
+    <div class="section-header">
+      <div class="page-title">Expenses</div>
+      <button class="btn btn-primary" onclick="toggleForm('expense-form')">+ Add Expense</button>
+    </div>
+    <div class="add-form" id="expense-form">
+      <div class="form-grid">
+        <div class="form-group"><label>Date</label>
+          <input type="date" id="e-date" value="${today()}"></div>
+        <div class="form-group"><label>Category</label>
+          <select id="e-cat">${optionsHTML(EXPENSE_CATS)}</select></div>
+        <div class="form-group"><label>Description</label>
+          <input id="e-desc" placeholder="What was purchased"></div>
+        <div class="form-group"><label>Vendor</label>
+          <input id="e-vendor" placeholder="Where you bought it"></div>
+        <div class="form-group"><label>Amount ($)</label>
+          <input type="number" step="0.01" id="e-amt" placeholder="0.00"></div>
+        <div class="form-group"><label>Payment Method</label>
+          <select id="e-pay">${optionsHTML(PAY_METHODS)}</select></div>
+        <div class="form-group"><label>Notes</label>
+          <input id="e-notes" placeholder="Optional"></div>
+      </div>
+      <button class="btn btn-primary" onclick="addExpense()">Add Expense</button>
+    </div>
+    <div class="totals-bar">
+      <div class="total-item"><label>Total Expenses (YTD)</label>
+        <span style="color:var(--negative)">${fmt(total)}</span></div>
+      <div class="total-item"><label>Entries</label><span>${expenses.length}</span></div>
+    </div>
+    <div class="table-wrap"><table>
+      <thead><tr>
+        <th>Date</th><th>Category</th><th>Description</th><th>Vendor</th>
+        <th>Amount</th><th>Method</th><th>Notes</th><th></th>
+      </tr></thead>
+      <tbody>
+        ${expenses.length === 0
+          ? '<tr><td colspan="8" style="color:var(--muted);text-align:center;padding:24px">No expenses yet</td></tr>'
+          : expenses.slice().reverse().map(e => `
+            <tr>
+              <td>${esc(e.date)}</td><td>${esc(e.category)}</td>
+              <td>${esc(e.description)}</td><td>${esc(e.vendor) || '&mdash;'}</td>
+              <td style="color:var(--negative)">${fmt(e.amount)}</td>
+              <td>${esc(e.paymentMethod)}</td>
+              <td style="color:var(--muted)">${esc(e.notes)}</td>
+              <td><button class="btn btn-danger" onclick="deleteExpense('${esc(e.id)}')">&#x2715;</button></td>
+            </tr>`).join('')}
+      </tbody>
+    </table></div>
+  `;
+}
+
+function addExpense() {
+  const amt = parseFloat(document.getElementById('e-amt').value);
+  if (!amt || amt <= 0) { alert('Enter a valid amount.'); return; }
+  DB.push('pp_expenses', {
+    id: uid(), date: document.getElementById('e-date').value,
+    category: document.getElementById('e-cat').value,
+    description: document.getElementById('e-desc').value,
+    vendor: document.getElementById('e-vendor').value,
+    amount: amt, paymentMethod: document.getElementById('e-pay').value,
+    notes: document.getElementById('e-notes').value,
+  });
+  renderExpenses();
+}
+
+function deleteExpense(id) {
+  if (!confirm('Delete this expense?')) return;
+  DB.del('pp_expenses', id);
+  renderExpenses();
+}
+
+// ── Mileage section ──────────────────────────────────────────────────────────
+function renderMileage() {
+  const entries  = DB.get('pp_mileage') || [];
+  const settings = getSettings();
+  const totalMiles = entries.reduce((s, m) => s + Number(m.miles), 0);
+  const totalDed   = entries.reduce((s, m) => s + Number(m.deduction), 0);
+  document.getElementById('mileage').innerHTML = `
+    <div class="section-header">
+      <div class="page-title">Mileage</div>
+      <button class="btn btn-primary" onclick="toggleForm('mileage-form')">+ Add Trip</button>
+    </div>
+    <div class="add-form" id="mileage-form">
+      <div class="form-grid">
+        <div class="form-group"><label>Date</label>
+          <input type="date" id="m-date" value="${today()}"></div>
+        <div class="form-group"><label>From</label>
+          <input id="m-from" placeholder="Starting location"></div>
+        <div class="form-group"><label>To</label>
+          <input id="m-to" placeholder="Destination"></div>
+        <div class="form-group"><label>Purpose</label>
+          <input id="m-purpose" placeholder="Reason for trip"></div>
+        <div class="form-group"><label>Miles</label>
+          <input type="number" step="0.1" id="m-miles" placeholder="0.0"></div>
+        <div class="form-group"><label>Notes</label>
+          <input id="m-notes" placeholder="Optional"></div>
+      </div>
+      <button class="btn btn-primary" onclick="addMileage()">Add Trip</button>
+    </div>
+    <div class="totals-bar">
+      <div class="total-item"><label>Total Miles (YTD)</label>
+        <span style="color:var(--accent)">${totalMiles.toFixed(1)}</span></div>
+      <div class="total-item"><label>Deduction @ $${esc(String(settings.irsRate))}/mi</label>
+        <span style="color:var(--positive)">${fmt(totalDed)}</span></div>
+      <div class="total-item"><label>Trips Logged</label><span>${entries.length}</span></div>
+    </div>
+    <div class="table-wrap"><table>
+      <thead><tr>
+        <th>Date</th><th>From</th><th>To</th><th>Purpose</th>
+        <th>Miles</th><th>Deduction</th><th>Notes</th><th></th>
+      </tr></thead>
+      <tbody>
+        ${entries.length === 0
+          ? '<tr><td colspan="8" style="color:var(--muted);text-align:center;padding:24px">No trips logged yet</td></tr>'
+          : entries.slice().reverse().map(m => `
+            <tr>
+              <td>${esc(m.date)}</td><td>${esc(m.from)}</td>
+              <td>${esc(m.to)}</td><td>${esc(m.purpose)}</td>
+              <td style="color:var(--accent)">${Number(m.miles).toFixed(1)}</td>
+              <td style="color:var(--positive)">${fmt(m.deduction)}</td>
+              <td style="color:var(--muted)">${esc(m.notes)}</td>
+              <td><button class="btn btn-danger" onclick="deleteMileage('${esc(m.id)}')">&#x2715;</button></td>
+            </tr>`).join('')}
+      </tbody>
+    </table></div>
+  `;
+}
+
+function addMileage() {
+  const miles = parseFloat(document.getElementById('m-miles').value);
+  if (!miles || miles <= 0) { alert('Enter a valid mileage.'); return; }
+  const rate = getSettings().irsRate;
+  DB.push('pp_mileage', {
+    id: uid(), date: document.getElementById('m-date').value,
+    from: document.getElementById('m-from').value,
+    to: document.getElementById('m-to').value,
+    purpose: document.getElementById('m-purpose').value,
+    miles, deduction: parseFloat((miles * rate).toFixed(2)),
+    notes: document.getElementById('m-notes').value,
+  });
+  renderMileage();
+}
+
+function deleteMileage(id) {
+  if (!confirm('Delete this trip?')) return;
+  DB.del('pp_mileage', id);
+  renderMileage();
+}
+
+// ── Jobs section ─────────────────────────────────────────────────────────────
+function statusBadge(status) {
+  const cls = {
+    'Pending': 'pending', 'In Progress': 'progress',
+    'Complete': 'complete', 'Awaiting Parts': 'awaiting', 'Closed': 'closed',
+  };
+  return `<span class="badge badge-${cls[status] || 'pending'}">${esc(status)}</span>`;
+}
+
+function renderJobs() {
+  const jobs = DB.get('pp_jobs') || [];
+  const done = jobs.filter(j => j.status === 'Complete' || j.status === 'Closed').length;
+  document.getElementById('jobs').innerHTML = `
+    <div class="section-header">
+      <div class="page-title">Jobs</div>
+      <button class="btn btn-primary" onclick="toggleForm('job-form')">+ New Job</button>
+    </div>
+    <div class="add-form" id="job-form">
+      <div class="form-grid">
+        <div class="form-group"><label>Date</label>
+          <input type="date" id="j-date" value="${today()}"></div>
+        <div class="form-group"><label>Customer Name</label>
+          <input id="j-customer" placeholder="Full name"></div>
+        <div class="form-group"><label>Phone</label>
+          <input id="j-phone" placeholder="555-000-0000"></div>
+        <div class="form-group"><label>Issue Description</label>
+          <input id="j-issue" placeholder="What's wrong?"></div>
+        <div class="form-group"><label>Service Performed</label>
+          <input id="j-service" placeholder="What did you do?"></div>
+        <div class="form-group"><label>Labor ($)</label>
+          <input type="number" step="0.01" id="j-labor" placeholder="0.00"></div>
+        <div class="form-group"><label>Parts ($)</label>
+          <input type="number" step="0.01" id="j-parts" placeholder="0.00"></div>
+        <div class="form-group"><label>Status</label>
+          <select id="j-status">${optionsHTML(JOB_STATUSES)}</select></div>
+      </div>
+      <button class="btn btn-primary" onclick="addJob()">Add Job</button>
+    </div>
+    <div class="totals-bar">
+      <div class="total-item"><label>Total Jobs</label><span>${jobs.length}</span></div>
+      <div class="total-item"><label>Completed</label>
+        <span style="color:var(--positive)">${done}</span></div>
+    </div>
+    <div class="table-wrap"><table>
+      <thead><tr>
+        <th>#</th><th>Date</th><th>Customer</th><th>Phone</th>
+        <th>Issue</th><th>Status</th><th>Total</th><th>Paid?</th><th>Actions</th>
+      </tr></thead>
+      <tbody>
+        ${jobs.length === 0
+          ? '<tr><td colspan="9" style="color:var(--muted);text-align:center;padding:32px">No jobs yet &mdash; your first one is coming!</td></tr>'
+          : jobs.slice().reverse().map((j, i) => {
+              const num = jobs.length - i;
+              const total = Number(j.labor) + Number(j.parts);
+              return `<tr>
+                <td style="color:var(--muted)">#${num}</td>
+                <td>${esc(j.date)}</td>
+                <td><strong>${esc(j.customer)}</strong></td>
+                <td style="color:var(--muted)">${esc(j.phone) || '&mdash;'}</td>
+                <td>${esc(j.issue)}</td>
+                <td>${statusBadge(j.status)}</td>
+                <td style="color:var(--positive)">${fmt(total)}</td>
+                <td>${j.paid
+                  ? '<span style="color:var(--positive)">&#x2713; Paid</span>'
+                  : `<button class="btn btn-success" style="font-size:11px;padding:4px 10px"
+                       onclick="markPaid('${esc(j.id)}')">Mark Paid</button>`}</td>
+                <td style="display:flex;gap:6px;align-items:center">
+                  <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px"
+                    onclick="openInvoice('${esc(j.id)}')">Invoice</button>
+                  <button class="btn btn-danger" onclick="deleteJob('${esc(j.id)}')">&#x2715;</button>
+                </td>
+              </tr>`;
+            }).join('')}
+      </tbody>
+    </table></div>
+  `;
+}
+
+function addJob() {
+  const customer = document.getElementById('j-customer').value.trim();
+  if (!customer) { alert('Customer name is required.'); return; }
+  DB.push('pp_jobs', {
+    id: uid(), date: document.getElementById('j-date').value,
+    customer, phone: document.getElementById('j-phone').value,
+    issue: document.getElementById('j-issue').value,
+    service: document.getElementById('j-service').value,
+    labor: parseFloat(document.getElementById('j-labor').value) || 0,
+    parts: parseFloat(document.getElementById('j-parts').value) || 0,
+    status: document.getElementById('j-status').value,
+    paid: false,
+  });
+  renderJobs();
+}
+
+function markPaid(id) {
+  const jobs = DB.get('pp_jobs') || [];
+  const job  = jobs.find(j => j.id === id);
+  if (!job) return;
+  job.paid = true; job.status = 'Complete';
+  DB.set('pp_jobs', jobs);
+  DB.push('pp_income', {
+    id: uid(), date: today(), type: 'Service', category: 'Repair',
+    description: 'Job: ' + job.issue + ' \u2014 ' + job.customer,
+    amount: Number(job.labor) + Number(job.parts),
+    paymentMethod: 'Cash', notes: 'Job ID ' + id,
+  });
+  renderJobs();
+}
+
+function deleteJob(id) {
+  if (!confirm('Delete this job?')) return;
+  DB.del('pp_jobs', id);
+  renderJobs();
+}
+
+// ── Invoice section ──────────────────────────────────────────────────────────
+let currentInvoiceJobId = null;
+
+function openInvoice(jobId) {
+  currentInvoiceJobId = jobId;
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelector('[data-section="invoice"]').classList.add('active');
+  document.getElementById('invoice').classList.add('active');
+  renderInvoice();
+}
+
+function renderInvoice() {
+  const s    = getSettings();
+  const jobs = DB.get('pp_jobs') || [];
+
+  if (jobs.length === 0) {
+    document.getElementById('invoice').innerHTML = `
+      <div class="page-title">Invoice</div>
+      <div class="card" style="max-width:500px;color:var(--muted)">
+        No jobs yet. Add a job first, then click the Invoice button on any job row.
+      </div>`;
+    return;
+  }
+
+  if (!currentInvoiceJobId) {
+    document.getElementById('invoice').innerHTML = `
+      <div class="page-title">Invoice</div>
+      <div class="card" style="max-width:420px">
+        <div class="form-group">
+          <label>Select a Job</label>
+          <select onchange="currentInvoiceJobId=this.value;renderInvoice()">
+            <option value="">&mdash; choose a job &mdash;</option>
+            ${jobs.map((j, i) =>
+              `<option value="${esc(j.id)}">#${i+1} &mdash; ${esc(j.customer)} &mdash; ${esc(j.issue)}</option>`
+            ).join('')}
+          </select>
+        </div>
+      </div>`;
+    return;
+  }
+
+  const job = jobs.find(j => j.id === currentInvoiceJobId);
+  if (!job) { currentInvoiceJobId = null; renderInvoice(); return; }
+
+  const total  = Number(job.labor) + Number(job.parts);
+  const jobNum = jobs.indexOf(job) + 1;
+  const invNum = 'PP-' + new Date().getFullYear() + '-' + String(jobNum).padStart(3, '0');
+
+  document.getElementById('invoice').innerHTML = `
+    <div class="section-header">
+      <div class="page-title">Invoice ${esc(invNum)}</div>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-ghost"
+          onclick="currentInvoiceJobId=null;renderInvoice()">&larr; Change Job</button>
+        <button class="btn btn-primary" onclick="window.print()">Print / Save PDF</button>
+      </div>
+    </div>
+    <div id="printable" style="background:#fff;color:#111;max-width:680px;padding:48px;
+         border-radius:var(--radius);font-family:'Segoe UI',sans-serif">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:40px">
+        <div>
+          <div style="font-size:22px;font-weight:800;letter-spacing:1px">
+            &#9632; ${esc(s.businessName.toUpperCase())}
+          </div>
+          <div style="font-size:11px;color:#666;margin-top:4px;letter-spacing:2px">
+            FROM PIXELS TO PROCESSORS
+          </div>
+          <div style="margin-top:12px;font-size:13px;color:#555;line-height:1.8">
+            ${esc(s.phone)}<br>${esc(s.website)}
+            ${s.address ? '<br>' + esc(s.address) : ''}
+          </div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:28px;font-weight:800">INVOICE</div>
+          <div style="margin-top:12px;font-size:13px;color:#555;line-height:1.8">
+            <strong>Invoice #:</strong> ${esc(invNum)}<br>
+            <strong>Date:</strong> ${esc(today())}<br>
+            <strong>Due:</strong> Upon completion
+          </div>
+        </div>
+      </div>
+      <div style="background:#f8f8f8;padding:16px 20px;border-radius:6px;margin-bottom:28px">
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;
+                    color:#888;margin-bottom:8px">Bill To</div>
+        <div style="font-weight:700;font-size:15px">${esc(job.customer)}</div>
+        ${job.phone ? `<div style="color:#555;font-size:13px;margin-top:3px">${esc(job.phone)}</div>` : ''}
+      </div>
+      <table style="width:100%;border-collapse:collapse;margin-bottom:24px">
+        <thead>
+          <tr style="border-bottom:2px solid #eee">
+            <th style="text-align:left;padding:10px 0;font-size:12px;color:#888;font-weight:500">Description</th>
+            <th style="text-align:right;padding:10px 0;font-size:12px;color:#888;font-weight:500;width:120px">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${job.service ? `
+            <tr>
+              <td style="padding:12px 0;border-bottom:1px solid #f0f0f0">
+                ${esc(job.service)}
+                ${job.issue ? `<div style="font-size:12px;color:#888;margin-top:3px">Issue: ${esc(job.issue)}</div>` : ''}
+              </td>
+              <td style="padding:12px 0;border-bottom:1px solid #f0f0f0;text-align:right">
+                $${Number(job.labor).toFixed(2)}
+              </td>
+            </tr>` : ''}
+          ${job.parts > 0 ? `
+            <tr>
+              <td style="padding:12px 0;border-bottom:1px solid #f0f0f0;color:#555">Parts &amp; Materials</td>
+              <td style="padding:12px 0;border-bottom:1px solid #f0f0f0;text-align:right">
+                $${Number(job.parts).toFixed(2)}
+              </td>
+            </tr>` : ''}
+        </tbody>
+      </table>
+      <div style="display:flex;justify-content:flex-end;margin-bottom:32px">
+        <div style="min-width:200px;border-top:2px solid #111;padding-top:8px">
+          <div style="display:flex;justify-content:space-between;padding:6px 0">
+            <strong>TOTAL DUE</strong>
+            <strong style="font-size:18px">$${total.toFixed(2)}</strong>
+          </div>
+        </div>
+      </div>
+      <div style="border-top:1px solid #eee;padding-top:20px;font-size:12px;color:#888;line-height:1.8">
+        Payment due upon completion.<br>
+        Accepted: Cash &middot; Venmo &middot; CashApp &middot; Square<br>
+        30-day labor warranty. Thank you for choosing ${esc(s.businessName)}!
+      </div>
+    </div>
+    <style>
+      @media print {
+        #sidebar, .section-header { display: none !important; }
+        body { background: #fff !important; }
+        #printable { box-shadow: none !important; border: none !important; }
+      }
+    </style>
+  `;
+}
+
+// ── Dashboard ─────────────────────────────────────────────────────────────────
+function renderDashboard() {
+  const settings = getSettings();
+  const income   = DB.get('pp_income')   || [];
+  const expenses = DB.get('pp_expenses') || [];
+  const mileage  = DB.get('pp_mileage')  || [];
+  const jobs     = DB.get('pp_jobs')     || [];
+
+  const revenue    = income.filter(i => i.type !== 'Owner Contribution')
+                           .reduce((s, i) => s + Number(i.amount), 0);
+  const totalExp   = expenses.reduce((s, e) => s + Number(e.amount), 0);
+  const netProfit  = revenue - totalExp;
+  const jobsDone   = jobs.filter(j => j.status === 'Complete' || j.status === 'Closed').length;
+  const avgJob     = jobsDone > 0 ? revenue / jobsDone : 0;
+  const totalMiles = mileage.reduce((s, m) => s + Number(m.miles), 0);
+  const mileDed    = mileage.reduce((s, m) => s + Number(m.deduction), 0);
+  const taxReserve = Math.max(0, netProfit * settings.taxReserve);
+
+  const mInc = Array(12).fill(0);
+  const mExp = Array(12).fill(0);
+  income.filter(i => i.type !== 'Owner Contribution').forEach(i => {
+    const d = new Date(i.date);
+    if (d.getFullYear() === 2026) mInc[d.getMonth()] += Number(i.amount);
+  });
+  expenses.forEach(e => {
+    const d = new Date(e.date);
+    if (d.getFullYear() === 2026) mExp[d.getMonth()] += Number(e.amount);
+  });
+  const maxVal = Math.max(...mInc, ...mExp, 1);
+  const curMon = new Date().getMonth();
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  const kpi = (label, value, cls, sub) => `
+    <div class="kpi-card">
+      <div class="kpi-label">${label}</div>
+      <div class="kpi-value ${cls}">${value}</div>
+      <div class="kpi-sub">${sub}</div>
+    </div>`;
+
+  document.getElementById('dashboard').innerHTML = `
+    <div class="page-title">Dashboard &mdash; 2026</div>
+    <div class="kpi-grid">
+      ${kpi('Total Income',   fmt(revenue),   revenue > 0 ? 'kpi-positive' : '', 'Year to Date')}
+      ${kpi('Total Expenses', fmt(totalExp),  'kpi-negative', 'Year to Date')}
+      ${kpi('Net Profit',     fmt(netProfit), netProfit >= 0 ? 'kpi-positive' : 'kpi-negative', 'Year to Date')}
+      ${kpi('Jobs Completed', jobsDone,       'kpi-accent',   'Year to Date')}
+      ${kpi('Avg Job Value',  fmt(avgJob),    avgJob > 0 ? 'kpi-positive' : '', 'Per Completed Job')}
+      ${kpi('Miles Driven',   totalMiles.toFixed(1), 'kpi-accent', 'Total YTD')}
+      ${kpi('Mileage Deduction', fmt(mileDed), 'kpi-positive', 'IRS $' + settings.irsRate + '/mile')}
+      ${kpi('Tax Reserve (' + Math.round(settings.taxReserve * 100) + '%)',
+            fmt(taxReserve), 'kpi-warning', 'Set This Aside')}
+    </div>
+    <div class="card">
+      <div style="font-size:12px;font-weight:600;color:var(--muted);
+                  text-transform:uppercase;letter-spacing:1px;margin-bottom:16px">
+        Monthly Breakdown &mdash; 2026
+      </div>
+      <div class="chart-bar-wrap">
+        ${months.map((m, i) => {
+          const hInc = Math.round((mInc[i] / maxVal) * 110);
+          const hExp = Math.round((mExp[i] / maxVal) * 110);
+          const dim  = i === curMon ? '' : 'opacity:0.45;';
+          const bold = i === curMon ? 'font-weight:700;color:var(--text)' : 'color:var(--muted)';
+          return `
+            <div class="chart-col">
+              <div class="chart-col-bars">
+                <div class="bar-income"  style="height:${hInc}px;${dim}" title="Income: ${fmt(mInc[i])}"></div>
+                <div class="bar-expense" style="height:${hExp}px;${dim}" title="Expenses: ${fmt(mExp[i])}"></div>
+              </div>
+              <div class="chart-label" style="${bold}">${m}</div>
+            </div>`;
+        }).join('')}
+      </div>
+      <div style="display:flex;gap:16px;margin-top:12px;font-size:11px;color:var(--muted)">
+        <span><span style="color:var(--positive)">&#9632;</span> Income</span>
+        <span><span style="color:var(--negative)">&#9632;</span> Expenses</span>
+      </div>
+    </div>
+  `;
+}
+
+// ── Export / Import ──────────────────────────────────────────────────────────
+function exportCSV() {
+  const sections = [
+    { name: 'INCOME',   rows: DB.get('pp_income')   || [] },
+    { name: 'EXPENSES', rows: DB.get('pp_expenses') || [] },
+    { name: 'MILEAGE',  rows: DB.get('pp_mileage')  || [] },
+    { name: 'JOBS',     rows: DB.get('pp_jobs')     || [] },
+  ];
+  const csvEsc = v => {
+    const s = String(v ?? '');
+    return s.includes(',') || s.includes('"') || s.includes('\n')
+      ? '"' + s.replace(/"/g, '""') + '"' : s;
+  };
+  let out = '';
+  sections.forEach(({ name, rows }) => {
+    if (rows.length === 0) return;
+    out += '\n' + name + '\n';
+    out += Object.keys(rows[0]).map(csvEsc).join(',') + '\n';
+    rows.forEach(r => { out += Object.values(r).map(csvEsc).join(',') + '\n'; });
+  });
+  const blob = new Blob([out.trim()], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'PixelPatcher-' + today() + '.csv';
+  a.click();
+}
+
+function exportJSON() {
+  const data = {
+    income: DB.get('pp_income') || [], expenses: DB.get('pp_expenses') || [],
+    mileage: DB.get('pp_mileage') || [], jobs: DB.get('pp_jobs') || [],
+    settings: getSettings(), exportedAt: new Date().toISOString(),
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'PixelPatcher-backup-' + today() + '.json';
+  a.click();
+}
+
+function importJSON() {
+  const input = document.createElement('input');
+  input.type = 'file'; input.accept = '.json';
+  input.onchange = e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        if (data.income)   DB.set('pp_income',   data.income);
+        if (data.expenses) DB.set('pp_expenses',  data.expenses);
+        if (data.mileage)  DB.set('pp_mileage',   data.mileage);
+        if (data.jobs)     DB.set('pp_jobs',      data.jobs);
+        if (data.settings) DB.set('pp_settings',  data.settings);
+        alert('Import successful. Reloading...');
+        location.reload();
+      } catch {
+        alert('Import failed \u2014 file may be corrupted or wrong format.');
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+// Initial render
+renderDashboard();
+</script>
+</body>
+</html>
