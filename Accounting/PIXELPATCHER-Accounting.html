@@ -414,7 +414,7 @@ function toggleForm(id) {
 // ── Settings ─────────────────────────────────────────────────────────────────
 function defaultSettings() {
   return { businessName: 'Pixel Patcher', phone: '540-300-2577',
-           website: 'pixelpatcher.com', address: '', irsRate: 0.70, taxReserve: 0.25 };
+           website: 'pixelpatcher.com', address: '', irsRate: 0.70, taxReserve: 0.25, taxRate: 0.053 };
 }
 function getSettings() { return DB.get('pp_settings') || defaultSettings(); }
 
@@ -459,6 +459,8 @@ function renderSettings() {
           <input type="number" step="0.01" id="s-irs" value="${esc(s.irsRate)}"></div>
         <div class="form-group"><label>Tax Reserve %</label>
           <input type="number" step="1" id="s-tax" value="${Math.round(s.taxReserve * 100)}"></div>
+        <div class="form-group"><label>Sales Tax Rate %</label>
+          <input type="number" step="0.1" id="s-taxrate" value="${((s.taxRate || 0) * 100).toFixed(1)}"></div>
       </div>
       <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
     </div>
@@ -473,6 +475,7 @@ function saveSettings() {
     address:      document.getElementById('s-address').value,
     irsRate:      parseFloat(document.getElementById('s-irs').value) || 0.70,
     taxReserve:   (parseFloat(document.getElementById('s-tax').value) || 25) / 100,
+    taxRate:      (parseFloat(document.getElementById('s-taxrate').value) || 0) / 100,
   });
   alert('Settings saved.');
 }
