@@ -674,7 +674,7 @@ function renderCustomerList() {
         + '<td>' + c.jobs + '</td>'
         + '<td style="color:var(--positive)">' + fmt(c.totalSpent) + '</td>'
         + '<td>' + esc(c.lastVisit) + '</td>'
-        + '<td><button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="showCustomer(\'' + esc(c.name) + '\')">View &rarr;</button></td>'
+        + '<td><button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" data-customer="' + esc(c.name) + '" onclick="showCustomer(this.dataset.customer)">View &rarr;</button></td>'
         + '</tr>'
       ).join('');
 
