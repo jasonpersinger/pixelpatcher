@@ -881,46 +881,188 @@ function renderCustomers() {
   else renderCustomerList();
 }
 
-function renderCustomerList() {
-  const jobs = DB.get('pp_jobs') || [];
+function saveCustomerForm(existingId) {
+  const get = id => (document.getElementById('ac-' + id) || {}).value || '';
+  const fname = get('fname').trim();
+  if (!fname) { alert('First name is required.'); return; }
+  const record = {
+    firstName: fname,
+    lastName:  get('lname').trim(),
+    phone:     get('phone'),
+    email:     get('email'),
+    street:    get('street'),
+    city:      get('city'),
+    state:     get('state'),
+    zip:       get('zip'),
+    notes:     get('notes'),
+  };
+  if (existingId) {
+    const custs = DB.get('pp_customers') || [];
+    DB.set('pp_customers', custs.map(c => c.id === existingId ? Object.assign({}, c, record) : c));
+  } else {
+    DB.push('pp_customers', Object.assign({ id: uid() }, record));
+  }
+  renderCustomers();
+}
 
-  const byName = {};
+function buildCustomerFormDOM(prefill, saveId) {
+  const v    = prefill || {};
+  const frag = document.createDocumentFragment();
+  const grid = document.createElement('div');
+  grid.className = 'form-grid';
+
+  function makeField(id, labelText, placeholder, type, spanTwo, inputStyle) {
+    const group = document.createElement('div');
+    group.className = 'form-group';
+    if (spanTwo) group.style.gridColumn = 'span 2';
+    const lbl = document.createElement('label');
+    lbl.textContent = labelText;
+    const inp = document.createElement('input');
+    inp.id = 'ac-' + id;
+    if (type) inp.type = type;
+    inp.placeholder = placeholder;
+    inp.value = v[id] || '';
+    if (inputStyle) inp.style.cssText = inputStyle;
+    group.appendChild(lbl);
+    group.appendChild(inp);
+    return group;
+  }
+
+  grid.appendChild(makeField('fname',  'First Name', 'Jane',            '',      false, ''));
+  grid.appendChild(makeField('lname',  'Last Name',  'Smith',           '',      false, ''));
+  grid.appendChild(makeField('phone',  'Phone',      '555-000-0000',    '',      false, ''));
+  grid.appendChild(makeField('email',  'Email',      'jane@example.com','email', false, ''));
+  grid.appendChild(makeField('street', 'Street',     '123 Main St',     '',      false, ''));
+  grid.appendChild(makeField('city',   'City',       'Springfield',     '',      false, ''));
+  grid.appendChild(makeField('state',  'State',      'IL',              '',      false, 'max-width:80px'));
+  grid.appendChild(makeField('zip',    'Zip',        '62701',           '',      false, 'max-width:120px'));
+  grid.appendChild(makeField('notes',  'Notes',      'Anything to remember about this customer', '', true, ''));
+
+  frag.appendChild(grid);
+
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-primary';
+  btn.textContent = 'Save Customer';
+  btn.addEventListener('click', () => saveCustomerForm(saveId || null));
+  frag.appendChild(btn);
+  return frag;
+}
+
+function renderCustomerList() {
+  const jobs   = DB.get('pp_jobs') || [];
+  const stored = DB.get('pp_customers') || [];
+
+  const seenNames = new Set(stored.map(c => (c.firstName + ' ' + c.lastName).toLowerCase()));
+  const jobOnly   = [];
+  const byName    = {};
   jobs.forEach(j => {
     if (!byName[j.customer]) byName[j.customer] = [];
     byName[j.customer].push(j);
+    if (!seenNames.has(j.customer.toLowerCase())) {
+      seenNames.add(j.customer.toLowerCase());
+      jobOnly.push({ id: null, firstName: j.customer, lastName: '', phone: j.phone || '', email: '', city: '' });
+    }
   });
 
-  const customers = Object.keys(byName).map(name => {
-    const cjobs = byName[name].slice().sort((a, b) => b.date.localeCompare(a.date));
+  const allCustomers = [...stored, ...jobOnly].map(c => {
+    const fullName   = c.firstName + (c.lastName ? ' ' + c.lastName : '');
+    const cjobs      = (byName[fullName] || []).slice().sort((a, b) => b.date.localeCompare(a.date));
     const totalSpent = cjobs.filter(j => j.paid).reduce((s, j) => s + Number(j.labor) + Number(j.parts) + Number(j.tax || 0), 0);
-    return { name, phone: cjobs[0].phone || '', jobs: cjobs.length, totalSpent, lastVisit: cjobs[0].date };
+    return Object.assign({}, c, { fullName, jobs: cjobs.length, totalSpent, lastVisit: cjobs[0] ? cjobs[0].date : '' });
   }).sort((a, b) => b.lastVisit.localeCompare(a.lastVisit));
 
   const totalRevenue = jobs.filter(j => j.paid).reduce((s, j) => s + Number(j.labor) + Number(j.parts), 0);
 
-  const rows = customers.length === 0
-    ? '<tr><td colspan="6" style="color:var(--muted);text-align:center;padding:24px">No customers yet</td></tr>'
-    : customers.map(c =>
-        '<tr>'
-        + '<td><strong>' + esc(c.name) + '</strong></td>'
-        + '<td style="color:var(--muted)">' + (esc(c.phone) || '&mdash;') + '</td>'
-        + '<td>' + c.jobs + '</td>'
-        + '<td style="color:var(--positive)">' + fmt(c.totalSpent) + '</td>'
-        + '<td>' + esc(c.lastVisit) + '</td>'
-        + '<td><button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" data-customer="' + esc(c.name) + '" onclick="showCustomer(this.dataset.customer)">View &rarr;</button></td>'
-        + '</tr>'
-      ).join('');
+  const section = document.getElementById('customers');
+  section.textContent = '';
 
-  document.getElementById('customers').innerHTML =
-    '<div class="page-title">Customers</div>'
-    + '<div class="totals-bar">'
-    + '<div class="total-item"><label>Total Customers</label><span>' + customers.length + '</span></div>'
-    + '<div class="total-item"><label>Total Revenue</label><span style="color:var(--positive)">' + fmt(totalRevenue) + '</span></div>'
-    + '</div>'
-    + '<div class="table-wrap"><table>'
-    + '<thead><tr><th>Customer</th><th>Phone</th><th>Jobs</th><th>Total Spent</th><th>Last Visit</th><th></th></tr></thead>'
-    + '<tbody>' + rows + '</tbody>'
-    + '</table></div>';
+  // Header
+  const hdr = document.createElement('div');
+  hdr.className = 'section-header';
+  const title = document.createElement('div');
+  title.className = 'page-title';
+  title.textContent = 'Customers';
+  const addBtn = document.createElement('button');
+  addBtn.className = 'btn btn-primary';
+  addBtn.textContent = '+ Add Customer';
+  addBtn.addEventListener('click', () => toggleForm('add-customer-form'));
+  hdr.appendChild(title);
+  hdr.appendChild(addBtn);
+  section.appendChild(hdr);
+
+  // Inline add form
+  const formWrap = document.createElement('div');
+  formWrap.className = 'add-form';
+  formWrap.id = 'add-customer-form';
+  formWrap.appendChild(buildCustomerFormDOM());
+  section.appendChild(formWrap);
+
+  // Totals bar
+  const totals = document.createElement('div');
+  totals.className = 'totals-bar';
+  const t1 = document.createElement('div'); t1.className = 'total-item';
+  const t1l = document.createElement('label'); t1l.textContent = 'Total Customers';
+  const t1s = document.createElement('span'); t1s.textContent = allCustomers.length;
+  t1.appendChild(t1l); t1.appendChild(t1s);
+  const t2 = document.createElement('div'); t2.className = 'total-item';
+  const t2l = document.createElement('label'); t2l.textContent = 'Total Revenue';
+  const t2s = document.createElement('span'); t2s.style.color = 'var(--positive)'; t2s.textContent = fmt(totalRevenue);
+  t2.appendChild(t2l); t2.appendChild(t2s);
+  totals.appendChild(t1); totals.appendChild(t2);
+  section.appendChild(totals);
+
+  // Table
+  const wrap = document.createElement('div');
+  wrap.className = 'table-wrap';
+  const table = document.createElement('table');
+  const thead = document.createElement('thead');
+  const hrow  = document.createElement('tr');
+  ['Name','Phone','Email','City','Jobs','Total Spent',''].forEach(h => {
+    const th = document.createElement('th'); th.textContent = h; hrow.appendChild(th);
+  });
+  thead.appendChild(hrow);
+  table.appendChild(thead);
+
+  const tbody = document.createElement('tbody');
+  if (allCustomers.length === 0) {
+    const tr = document.createElement('tr');
+    const td = document.createElement('td');
+    td.colSpan = 7; td.style.cssText = 'color:var(--muted);text-align:center;padding:24px';
+    td.textContent = 'No customers yet';
+    tr.appendChild(td); tbody.appendChild(tr);
+  } else {
+    allCustomers.forEach(c => {
+      const tr = document.createElement('tr');
+      const cells = [
+        { text: c.fullName, bold: true },
+        { text: c.phone || '—', muted: true },
+        { text: c.email || '—', muted: true },
+        { text: c.city  || '—', muted: true },
+        { text: c.jobs },
+        { text: fmt(c.totalSpent), positive: true },
+      ];
+      cells.forEach(({ text, bold, muted, positive }) => {
+        const td = document.createElement('td');
+        if (bold) { const s = document.createElement('strong'); s.textContent = text; td.appendChild(s); }
+        else td.textContent = text;
+        if (muted)    td.style.color = 'var(--muted)';
+        if (positive) td.style.color = 'var(--positive)';
+        tr.appendChild(td);
+      });
+      const tdBtn = document.createElement('td');
+      const vBtn  = document.createElement('button');
+      vBtn.className = 'btn btn-ghost';
+      vBtn.style.cssText = 'font-size:11px;padding:4px 10px';
+      vBtn.textContent = 'View →';
+      vBtn.addEventListener('click', () => showCustomer(c.fullName));
+      tdBtn.appendChild(vBtn);
+      tr.appendChild(tdBtn);
+      tbody.appendChild(tr);
+    });
+  }
+  table.appendChild(tbody);
+  wrap.appendChild(table);
+  section.appendChild(wrap);
 }
 
 // ── Follow-up modal (from job row) ────────────────────────────────────────────
