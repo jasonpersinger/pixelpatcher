@@ -748,11 +748,8 @@
     <div class="section-inner">
       <h2 class="section-title">REVIEWS</h2>
       <div class="section-divider"></div>
-      <div class="reviews-grid">
-        <div class="review-placeholder">★★★★★<br><br>Reviews coming soon</div>
-        <div class="review-placeholder">★★★★★<br><br>Reviews coming soon</div>
-        <div class="review-placeholder">★★★★★<br><br>Reviews coming soon</div>
-      </div>
+      <div class="reviews-grid" id="reviews-grid"></div>
+      <div class="reviews-dots" id="reviews-dots"></div>
       <p class="reviews-cta">
         <a href="https://g.page/r/CWDuHGG5sLHVEAE/review" target="_blank">Leave us a Google Review &#9658;</a>
       </p>
@@ -831,6 +828,163 @@
       contactSuccess.style.display = 'block';
     });
   }
+</script>
+<script>
+(function () {
+  var PLACE_ID   = 'ChIJ3TP7T08NTYgRYO4cYbmwsdU';
+  var API_KEY    = 'AIzaSyBq6GyteufkPGVAdbOfeiqw6lflQ1ZpuQ8';
+  var MIN_RATING = 4;
+  var VISIBLE    = 3;
+  var ROTATE_MS  = 6000;
+
+  function el(tag, cls) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    return e;
+  }
+
+  function stars(n) {
+    var wrap = el('div', 'review-stars');
+    var filled = el('span', 'stars-filled');
+    filled.textContent = '★'.repeat(n);
+    var empty  = el('span', 'stars-empty');
+    empty.textContent  = '★'.repeat(5 - n);
+    wrap.appendChild(filled);
+    wrap.appendChild(empty);
+    return wrap;
+  }
+
+  function truncate(text, max) {
+    if (!text || text.length <= max) return text || '';
+    return text.slice(0, max).trimEnd() + '…';
+  }
+
+  function buildCard(r) {
+    var card = el('div', 'review-card');
+
+    var top = el('div', 'review-top');
+    top.appendChild(stars(r.rating));
+    var logo = document.createElement('img');
+    logo.className = 'google-logo';
+    logo.src = 'https://www.gstatic.com/images/branding/product/1x/googleg_16dp.png';
+    logo.alt = 'Google';
+    top.appendChild(logo);
+    card.appendChild(top);
+
+    var p = el('p', 'review-text');
+    p.textContent = truncate((r.text && r.text.text) || '', 200);
+    card.appendChild(p);
+
+    var author = el('div', 'review-author');
+    var photo = (r.authorAttribution && r.authorAttribution.photoUri) || '';
+    if (photo) {
+      var img = document.createElement('img');
+      img.className = 'review-avatar';
+      img.src = photo;
+      img.alt = (r.authorAttribution && r.authorAttribution.displayName) || '';
+      img.addEventListener('error', function () { this.style.display = 'none'; });
+      author.appendChild(img);
+    }
+    var info = el('div');
+    var nameEl = el('div', 'review-name');
+    nameEl.textContent = (r.authorAttribution && r.authorAttribution.displayName) || 'Anonymous';
+    var dateEl = el('div', 'review-date');
+    dateEl.textContent = r.relativePublishTimeDescription || '';
+    info.appendChild(nameEl);
+    info.appendChild(dateEl);
+    author.appendChild(info);
+    card.appendChild(author);
+
+    return card;
+  }
+
+  function initCarousel(reviews) {
+    var grid   = document.getElementById('reviews-grid');
+    var dotsEl = document.getElementById('reviews-dots');
+    var n      = reviews.length;
+    var current = 0;
+    var timer;
+
+    if (!grid) return;
+
+    // Build dots
+    if (dotsEl) {
+      reviews.forEach(function (_, i) {
+        var btn = document.createElement('button');
+        btn.className = 'review-dot' + (i === 0 ? ' active' : '');
+        btn.setAttribute('data-i', i);
+        btn.setAttribute('aria-label', 'Review ' + (i + 1));
+        dotsEl.appendChild(btn);
+      });
+      dotsEl.addEventListener('click', function (e) {
+        var btn = e.target.closest && e.target.closest('.review-dot');
+        if (!btn) return;
+        goTo(parseInt(btn.getAttribute('data-i'), 10));
+        resetTimer();
+      });
+    }
+
+    function updateDots() {
+      if (!dotsEl) return;
+      dotsEl.querySelectorAll('.review-dot').forEach(function (d, i) {
+        d.classList.toggle('active', i === current);
+      });
+    }
+
+    function render(idx, animate) {
+      var visible = [0, 1, 2].map(function (offset) {
+        return reviews[(idx + offset) % n];
+      });
+      function swap() {
+        while (grid.firstChild) grid.removeChild(grid.firstChild);
+        visible.forEach(function (r) { grid.appendChild(buildCard(r)); });
+      }
+      if (animate) {
+        grid.classList.add('fading');
+        setTimeout(function () { swap(); grid.classList.remove('fading'); }, 300);
+      } else {
+        swap();
+      }
+    }
+
+    function goTo(idx) {
+      current = ((idx % n) + n) % n;
+      render(current, true);
+      updateDots();
+    }
+
+    function advance() { goTo(current + 1); }
+
+    function resetTimer() {
+      clearInterval(timer);
+      if (n > VISIBLE) timer = setInterval(advance, ROTATE_MS);
+    }
+
+    render(0, false);
+    resetTimer();
+  }
+
+  fetch('https://places.googleapis.com/v1/places/' + PLACE_ID, {
+    headers: {
+      'X-Goog-Api-Key': API_KEY,
+      'X-Goog-FieldMask': 'reviews'
+    }
+  })
+  .then(function (res) { return res.json(); })
+  .then(function (data) {
+    var reviews = (data.reviews || []).filter(function (r) { return r.rating >= MIN_RATING; });
+    if (reviews.length === 0) {
+      var sec = document.getElementById('reviews');
+      if (sec) sec.style.display = 'none';
+      return;
+    }
+    initCarousel(reviews);
+  })
+  .catch(function () {
+    var sec = document.getElementById('reviews');
+    if (sec) sec.style.display = 'none';
+  });
+})();
 </script>
 </body>
 </html>
