@@ -662,7 +662,7 @@ function renderCustomerList() {
 
   const customers = Object.keys(byName).map(name => {
     const cjobs = byName[name].slice().sort((a, b) => b.date.localeCompare(a.date));
-    const totalSpent = cjobs.filter(j => j.paid).reduce((s, j) => s + Number(j.labor) + Number(j.parts), 0);
+    const totalSpent = cjobs.filter(j => j.paid).reduce((s, j) => s + Number(j.labor) + Number(j.parts) + Number(j.tax || 0), 0);
     return { name, phone: cjobs[0].phone || '', jobs: cjobs.length, totalSpent, lastVisit: cjobs[0].date };
   }).sort((a, b) => b.lastVisit.localeCompare(a.lastVisit));
 
@@ -699,15 +699,15 @@ function renderCustomerDetail(name) {
   const recent      = jobs[0] || {};
   const phone       = recent.phone   || '';
   const address     = recent.address || '';
-  const totalSpent  = jobs.filter(j => j.paid).reduce((s, j) => s + Number(j.labor) + Number(j.parts), 0);
+  const totalSpent  = jobs.filter(j => j.paid).reduce((s, j) => s + Number(j.labor) + Number(j.parts) + Number(j.tax || 0), 0);
   const outstanding = jobs.filter(j => !j.paid && j.status !== 'Closed')
-                          .reduce((s, j) => s + Number(j.labor) + Number(j.parts), 0);
+                          .reduce((s, j) => s + Number(j.labor) + Number(j.parts) + Number(j.tax || 0), 0);
   const dates       = jobs.map(j => j.date).sort();
   const firstVisit  = dates[0] || '';
   const lastVisit   = dates[dates.length - 1] || '';
 
   const rows = jobs.map(j => {
-    const total = Number(j.labor) + Number(j.parts);
+    const total = Number(j.labor) + Number(j.parts) + Number(j.tax || 0);
     return '<tr>'
       + '<td>' + esc(j.date) + '</td>'
       + '<td>' + esc(j.issue) + '</td>'
