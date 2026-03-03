@@ -1108,7 +1108,8 @@ function renderDashboard() {
   const avgJob     = jobsDone > 0 ? revenue / jobsDone : 0;
   const totalMiles = mileage.reduce((s, m) => s + Number(m.miles), 0);
   const mileDed    = mileage.reduce((s, m) => s + Number(m.deduction), 0);
-  const taxReserve = Math.max(0, netProfit * settings.taxReserve);
+  const taxReserve        = Math.max(0, netProfit * settings.taxReserve);
+  const salesTaxCollected = jobs.filter(j => j.paid).reduce((s, j) => s + Number(j.tax || 0), 0);
 
   const mInc = Array(12).fill(0);
   const mExp = Array(12).fill(0);
@@ -1143,6 +1144,7 @@ function renderDashboard() {
       ${kpi('Mileage Deduction', fmt(mileDed), 'kpi-positive', 'IRS $' + settings.irsRate + '/mile')}
       ${kpi('Tax Reserve (' + Math.round(settings.taxReserve * 100) + '%)',
             fmt(taxReserve), 'kpi-warning', 'Set This Aside')}
+      ${kpi('Sales Tax Collected', fmt(salesTaxCollected), 'kpi-warning', 'Set Aside')}
     </div>
     <div class="card">
       <div style="font-size:12px;font-weight:600;color:var(--muted);
