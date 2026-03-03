@@ -176,6 +176,7 @@
       <button class="nav-btn active" data-section="dashboard">Dashboard</button>
       <button class="nav-btn" data-section="income">Income</button>
       <button class="nav-btn" data-section="customers">Customers</button>
+      <button class="nav-btn" data-section="followups">Follow-ups</button>
       <button class="nav-btn" data-section="jobs">Jobs</button>
       <button class="nav-btn" data-section="invoice">Invoice</button>
       <button class="nav-btn" data-section="expenses">Expenses</button>
@@ -195,8 +196,9 @@
   <main id="main">
     <section id="dashboard" class="section active"></section>
     <section id="income"    class="section"></section>
-    <section id="customers" class="section"></section>
-    <section id="jobs"      class="section"></section>
+    <section id="customers"  class="section"></section>
+    <section id="followups"  class="section"></section>
+    <section id="jobs"       class="section"></section>
     <section id="invoice"   class="section"></section>
     <section id="expenses"  class="section"></section>
     <section id="mileage"   class="section"></section>
@@ -373,6 +375,7 @@ function renderSection(name) {
   if (name === 'dashboard') renderDashboard();
   else if (name === 'income')   renderIncome();
   else if (name === 'customers') renderCustomers();
+  else if (name === 'followups') renderFollowups();
   else if (name === 'jobs')     renderJobs();
   else if (name === 'expenses') renderExpenses();
   else if (name === 'mileage')  renderMileage();
