@@ -956,6 +956,101 @@ function renderCustomerDetail(name) {
     + '</table></div>';
 }
 
+// ── Follow-ups section ────────────────────────────────────────────────────────
+function renderFollowups() {
+  const all      = DB.get('pp_followups') || [];
+  const pending  = all.filter(f => !f.done).slice().sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+  const todayStr = today();
+
+  const section = document.getElementById('followups');
+  section.textContent = '';
+
+  const header = document.createElement('div');
+  header.className = 'section-header';
+  const title = document.createElement('div');
+  title.className = 'page-title';
+  title.textContent = 'Follow-ups';
+  header.appendChild(title);
+  section.appendChild(header);
+
+  const wrap = document.createElement('div');
+  wrap.className = 'table-wrap';
+  const table = document.createElement('table');
+
+  const thead = document.createElement('thead');
+  const hrow = document.createElement('tr');
+  ['Due Date', 'Customer', 'Phone', 'Note', ''].forEach(h => {
+    const th = document.createElement('th');
+    th.textContent = h;
+    hrow.appendChild(th);
+  });
+  thead.appendChild(hrow);
+  table.appendChild(thead);
+
+  const tbody = document.createElement('tbody');
+  if (pending.length === 0) {
+    const tr = document.createElement('tr');
+    const td = document.createElement('td');
+    td.colSpan = 5;
+    td.style.cssText = 'color:var(--muted);text-align:center;padding:24px';
+    td.textContent = 'No pending follow-ups';
+    tr.appendChild(td);
+    tbody.appendChild(tr);
+  } else {
+    pending.forEach(f => {
+      const overdue = f.dueDate < todayStr;
+      const tr = document.createElement('tr');
+
+      const tdDate = document.createElement('td');
+      tdDate.style.color  = overdue ? 'var(--negative)' : 'inherit';
+      tdDate.style.fontWeight = overdue ? '700' : '400';
+      tdDate.textContent  = f.dueDate;
+      if (overdue) {
+        const badge = document.createElement('span');
+        badge.style.fontSize = '10px';
+        badge.textContent = ' OVERDUE';
+        tdDate.appendChild(badge);
+      }
+
+      const tdCust = document.createElement('td');
+      const strong = document.createElement('strong');
+      strong.textContent = f.customerName;
+      tdCust.appendChild(strong);
+
+      const tdPhone = document.createElement('td');
+      tdPhone.style.color = 'var(--muted)';
+      tdPhone.textContent = f.phone || '—';
+
+      const tdNote = document.createElement('td');
+      tdNote.textContent = f.note;
+
+      const tdBtn = document.createElement('td');
+      const btn = document.createElement('button');
+      btn.className = 'btn btn-success';
+      btn.style.cssText = 'font-size:11px;padding:4px 10px';
+      btn.textContent = 'Done';
+      btn.addEventListener('click', () => markFollowupDone(f.id));
+      tdBtn.appendChild(btn);
+
+      tr.appendChild(tdDate);
+      tr.appendChild(tdCust);
+      tr.appendChild(tdPhone);
+      tr.appendChild(tdNote);
+      tr.appendChild(tdBtn);
+      tbody.appendChild(tr);
+    });
+  }
+  table.appendChild(tbody);
+  wrap.appendChild(table);
+  section.appendChild(wrap);
+}
+
+function markFollowupDone(id) {
+  const followups = DB.get('pp_followups') || [];
+  DB.set('pp_followups', followups.map(f => f.id === id ? Object.assign({}, f, { done: true }) : f));
+  renderFollowups();
+}
+
 // ── Mileage section ──────────────────────────────────────────────────────────
 function renderMileage() {
   const entries  = DB.get('pp_mileage') || [];
