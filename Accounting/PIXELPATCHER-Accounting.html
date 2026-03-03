@@ -298,9 +298,13 @@ fsauth.onAuthStateChanged(async user => {
 
 // ── Receipt upload ────────────────────────────────────────────────────────────
 let _receiptExpenseId = null;
+let _receiptKey       = 'pp_expenses';
+let _receiptRenderFn  = null;
 
-function openReceiptModal(expenseId) {
-  _receiptExpenseId = expenseId;
+function openReceiptModal(id, key, renderFn) {
+  _receiptExpenseId = id;
+  _receiptKey       = key      || 'pp_expenses';
+  _receiptRenderFn  = renderFn || renderExpenses;
   document.getElementById('receipt-progress').textContent = '';
   document.getElementById('receipt-file-input').value   = '';
   document.getElementById('receipt-camera-input').value = '';
@@ -326,12 +330,12 @@ function handleReceiptFile(event) {
   const ref  = fsstorage.ref(path);
 
   ref.put(file).then(snapshot => snapshot.ref.getDownloadURL()).then(url => {
-    const expenses = DB.get('pp_expenses') || [];
-    DB.set('pp_expenses', expenses.map(e =>
+    const items = DB.get(_receiptKey) || [];
+    DB.set(_receiptKey, items.map(e =>
       e.id === _receiptExpenseId ? Object.assign({}, e, { receiptUrl: url }) : e
     ));
     closeReceiptModal();
-    renderExpenses();
+    _receiptRenderFn();
   }).catch(err => {
     console.warn('Receipt upload failed:', err);
     progressEl.textContent = 'Upload failed. Please try again.';
