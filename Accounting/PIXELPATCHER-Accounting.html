@@ -635,6 +635,114 @@ function deleteIncome(id) {
   renderIncome();
 }
 
+// ── Customers section ────────────────────────────────────────────────────────
+let _customerView = null;
+
+function showCustomer(name) {
+  _customerView = name;
+  renderCustomers();
+}
+
+function renderCustomers() {
+  if (_customerView) renderCustomerDetail(_customerView);
+  else renderCustomerList();
+}
+
+function renderCustomerList() {
+  const jobs = DB.get('pp_jobs') || [];
+
+  const byName = {};
+  jobs.forEach(j => {
+    if (!byName[j.customer]) byName[j.customer] = [];
+    byName[j.customer].push(j);
+  });
+
+  const customers = Object.keys(byName).map(name => {
+    const cjobs = byName[name].slice().sort((a, b) => b.date.localeCompare(a.date));
+    const totalSpent = cjobs.filter(j => j.paid).reduce((s, j) => s + Number(j.labor) + Number(j.parts), 0);
+    return { name, phone: cjobs[0].phone || '', jobs: cjobs.length, totalSpent, lastVisit: cjobs[0].date };
+  }).sort((a, b) => b.lastVisit.localeCompare(a.lastVisit));
+
+  const totalRevenue = jobs.filter(j => j.paid).reduce((s, j) => s + Number(j.labor) + Number(j.parts), 0);
+
+  const rows = customers.length === 0
+    ? '<tr><td colspan="6" style="color:var(--muted);text-align:center;padding:24px">No customers yet</td></tr>'
+    : customers.map(c =>
+        '<tr>'
+        + '<td><strong>' + esc(c.name) + '</strong></td>'
+        + '<td style="color:var(--muted)">' + (esc(c.phone) || '&mdash;') + '</td>'
+        + '<td>' + c.jobs + '</td>'
+        + '<td style="color:var(--positive)">' + fmt(c.totalSpent) + '</td>'
+        + '<td>' + esc(c.lastVisit) + '</td>'
+        + '<td><button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="showCustomer(\'' + esc(c.name) + '\')">View &rarr;</button></td>'
+        + '</tr>'
+      ).join('');
+
+  document.getElementById('customers').innerHTML =
+    '<div class="page-title">Customers</div>'
+    + '<div class="totals-bar">'
+    + '<div class="total-item"><label>Total Customers</label><span>' + customers.length + '</span></div>'
+    + '<div class="total-item"><label>Total Revenue</label><span style="color:var(--positive)">' + fmt(totalRevenue) + '</span></div>'
+    + '</div>'
+    + '<div class="table-wrap"><table>'
+    + '<thead><tr><th>Customer</th><th>Phone</th><th>Jobs</th><th>Total Spent</th><th>Last Visit</th><th></th></tr></thead>'
+    + '<tbody>' + rows + '</tbody>'
+    + '</table></div>';
+}
+
+function renderCustomerDetail(name) {
+  const jobs = (DB.get('pp_jobs') || []).filter(j => j.customer === name)
+                                         .slice().sort((a, b) => b.date.localeCompare(a.date));
+  const recent      = jobs[0] || {};
+  const phone       = recent.phone   || '';
+  const address     = recent.address || '';
+  const totalSpent  = jobs.filter(j => j.paid).reduce((s, j) => s + Number(j.labor) + Number(j.parts), 0);
+  const outstanding = jobs.filter(j => !j.paid && j.status !== 'Closed')
+                          .reduce((s, j) => s + Number(j.labor) + Number(j.parts), 0);
+  const dates       = jobs.map(j => j.date).sort();
+  const firstVisit  = dates[0] || '';
+  const lastVisit   = dates[dates.length - 1] || '';
+
+  const rows = jobs.map(j => {
+    const total = Number(j.labor) + Number(j.parts);
+    return '<tr>'
+      + '<td>' + esc(j.date) + '</td>'
+      + '<td>' + esc(j.issue) + '</td>'
+      + '<td>' + esc(j.service) + '</td>'
+      + '<td>' + fmt(j.labor) + '</td>'
+      + '<td>' + fmt(j.parts) + '</td>'
+      + '<td style="color:var(--positive)">' + fmt(total) + '</td>'
+      + '<td>' + statusBadge(j.status) + '</td>'
+      + '<td>' + (j.paid
+          ? '<span style="color:var(--positive)">&#x2713; Paid</span>'
+          : '<span style="color:var(--negative)">Unpaid</span>') + '</td>'
+      + '</tr>';
+  }).join('') || '<tr><td colspan="8" style="color:var(--muted);text-align:center;padding:24px">No jobs</td></tr>';
+
+  document.getElementById('customers').innerHTML =
+    '<div class="section-header">'
+    + '<button class="btn btn-ghost" style="font-size:12px;padding:6px 14px" onclick="showCustomer(null)">&larr; All Customers</button>'
+    + '<div class="page-title" style="margin-bottom:0">' + esc(name) + '</div>'
+    + '</div>'
+    + '<div class="card" style="display:flex;gap:32px;margin-bottom:20px">'
+    + '<div><div style="font-size:11px;color:var(--muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:1px">Phone</div>'
+    + '<div>' + (esc(phone) || '&mdash;') + '</div></div>'
+    + '<div><div style="font-size:11px;color:var(--muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:1px">Address</div>'
+    + '<div>' + (esc(address) || '&mdash;') + '</div></div>'
+    + '</div>'
+    + '<div class="kpi-grid" style="grid-template-columns:repeat(5,1fr);margin-bottom:20px">'
+    + '<div class="kpi-card"><div class="kpi-label">Total Spent</div><div class="kpi-value kpi-positive">' + fmt(totalSpent) + '</div></div>'
+    + '<div class="kpi-card"><div class="kpi-label">Outstanding</div><div class="kpi-value kpi-negative">' + fmt(outstanding) + '</div></div>'
+    + '<div class="kpi-card"><div class="kpi-label">Total Jobs</div><div class="kpi-value">' + jobs.length + '</div></div>'
+    + '<div class="kpi-card"><div class="kpi-label">First Visit</div><div class="kpi-value kpi-accent" style="font-size:15px">' + (esc(firstVisit) || '&mdash;') + '</div></div>'
+    + '<div class="kpi-card"><div class="kpi-label">Last Visit</div><div class="kpi-value kpi-accent" style="font-size:15px">' + (esc(lastVisit) || '&mdash;') + '</div></div>'
+    + '</div>'
+    + '<div class="table-wrap"><table>'
+    + '<thead><tr><th>Date</th><th>Issue</th><th>Service</th><th>Labor</th><th>Parts</th><th>Total</th><th>Status</th><th>Paid</th></tr></thead>'
+    + '<tbody>' + rows + '</tbody>'
+    + '</table></div>';
+}
+
 // ── Mileage section ──────────────────────────────────────────────────────────
 function renderMileage() {
   const entries  = DB.get('pp_mileage') || [];
