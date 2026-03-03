@@ -364,6 +364,7 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
 
 function renderSection(name) {
   if (name === 'dashboard') renderDashboard();
+  else if (name === 'income')   renderIncome();
   else if (name === 'jobs')     renderJobs();
   else if (name === 'expenses') renderExpenses();
   else if (name === 'mileage')  renderMileage();
@@ -390,6 +391,7 @@ const fmt   = n => '$' + Number(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, '
 const EXPENSE_CATS = ['Tools & Equipment','Marketing','Licenses & Permits',
                       'Software','Insurance','Vehicle','Parts (resale)','Misc'];
 const PAY_METHODS  = ['Cash','Venmo','CashApp','Square','Check','Card','Transfer'];
+const INCOME_TYPES = ['Service','Owner Contribution','Other'];
 const JOB_STATUSES = ['Pending','In Progress','Complete','Awaiting Parts','Closed'];
 
 function optionsHTML(arr, selected = '') {
