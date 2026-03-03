@@ -185,7 +185,6 @@
     <div class="sidebar-footer">
       <div id="sync-status" style="font-size:11px; text-align:center;
            padding: 4px 0 8px; font-family:var(--font); color:var(--muted)">
-        &#x25CB; Not connected
       </div>
       <button onclick="exportCSV()">Export CSV</button>
       <button onclick="exportJSON()">Backup JSON</button>
@@ -532,12 +531,14 @@ function renderExpenses() {
                 ${e.receiptUrl
                   ? `<button class="btn" title="View receipt"
                        onclick="viewReceipt('${esc(e.receiptUrl)}')"
-                       style="color:var(--positive);background:none;border:none;
-                              font-size:22px;cursor:pointer;padding:0 4px">&#x25CF;</button>`
+                       style="background:var(--positive);color:#000;border:none;border-radius:12px;
+                              padding:4px 12px;font-size:11px;font-weight:700;cursor:pointer;
+                              font-family:var(--font);white-space:nowrap">&#x2713; Receipt</button>`
                   : `<button class="btn" title="Attach receipt"
                        onclick="openReceiptModal('${esc(e.id)}')"
-                       style="color:var(--negative);background:none;border:none;
-                              font-size:22px;cursor:pointer;padding:0 4px">&#x25CF;</button>`}
+                       style="background:var(--warning);color:#fff;border:none;border-radius:12px;
+                              padding:4px 12px;font-size:11px;font-weight:700;cursor:pointer;
+                              font-family:var(--font);white-space:nowrap">+ Receipt</button>`}
               </td>
               <td><button class="btn btn-danger" onclick="deleteExpense('${esc(e.id)}')">&#x2715;</button></td>
             </tr>`).join('')}
@@ -576,8 +577,8 @@ function renderIncome() {
     ? '<tr><td colspan="8" style="color:var(--muted);text-align:center;padding:24px">No income yet</td></tr>'
     : income.slice().reverse().map(i => {
         const dot = i.receiptUrl
-          ? '<button class="btn" title="View receipt" onclick="viewReceipt(\'' + esc(i.receiptUrl) + '\')" style="color:var(--positive);background:none;border:none;font-size:22px;cursor:pointer;padding:0 4px">&#x25CF;</button>'
-          : '<button class="btn" title="Attach receipt" onclick="openReceiptModal(\'' + esc(i.id) + '\',\'pp_income\',renderIncome)" style="color:var(--negative);background:none;border:none;font-size:22px;cursor:pointer;padding:0 4px">&#x25CF;</button>';
+          ? '<button class="btn" title="View receipt" onclick="viewReceipt(\'' + esc(i.receiptUrl) + '\')" style="background:var(--positive);color:#000;border:none;border-radius:12px;padding:4px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font);white-space:nowrap">&#x2713; Receipt</button>'
+          : '<button class="btn" title="Attach receipt" onclick="openReceiptModal(\'' + esc(i.id) + '\',\'pp_income\',renderIncome)" style="background:var(--warning);color:#fff;border:none;border-radius:12px;padding:4px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font);white-space:nowrap">+ Receipt</button>';
         const badge = i.type === 'Owner Contribution' ? 'badge-awaiting' : 'badge-complete';
         return '<tr>'
           + '<td>' + esc(i.date) + '</td>'
