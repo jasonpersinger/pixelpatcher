@@ -879,7 +879,7 @@ function renderJobs() {
           ? '<tr><td colspan="9" style="color:var(--muted);text-align:center;padding:32px">No jobs yet &mdash; your first one is coming!</td></tr>'
           : jobs.slice().reverse().map((j, i) => {
               const num = jobs.length - i;
-              const total = Number(j.labor) + Number(j.parts);
+              const total = Number(j.labor) + Number(j.parts) + Number(j.tax || 0);
               return `<tr>
                 <td style="color:var(--muted)">#${num}</td>
                 <td>${esc(j.date)}</td>
