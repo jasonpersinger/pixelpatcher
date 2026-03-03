@@ -560,6 +560,78 @@ function deleteExpense(id) {
   renderExpenses();
 }
 
+// ── Income section ────────────────────────────────────────────────────────────
+function renderIncome() {
+  const income  = DB.get('pp_income') || [];
+  const revenue = income.filter(i => i.type !== 'Owner Contribution')
+                        .reduce((s, i) => s + Number(i.amount), 0);
+  const totalIn = income.reduce((s, i) => s + Number(i.amount), 0);
+  const rows = income.length === 0
+    ? '<tr><td colspan="8" style="color:var(--muted);text-align:center;padding:24px">No income yet</td></tr>'
+    : income.slice().reverse().map(i => {
+        const dot = i.receiptUrl
+          ? '<button class="btn" title="View receipt" onclick="viewReceipt(\'' + esc(i.receiptUrl) + '\')" style="color:var(--positive);background:none;border:none;font-size:22px;cursor:pointer;padding:0 4px">&#x25CF;</button>'
+          : '<button class="btn" title="Attach receipt" onclick="openReceiptModal(\'' + esc(i.id) + '\',\'pp_income\',renderIncome)" style="color:var(--negative);background:none;border:none;font-size:22px;cursor:pointer;padding:0 4px">&#x25CF;</button>';
+        const badge = i.type === 'Owner Contribution' ? 'badge-awaiting' : 'badge-complete';
+        return '<tr>'
+          + '<td>' + esc(i.date) + '</td>'
+          + '<td><span class="badge ' + badge + '">' + esc(i.type) + '</span></td>'
+          + '<td>' + esc(i.description) + '</td>'
+          + '<td style="color:var(--positive)">' + fmt(i.amount) + '</td>'
+          + '<td>' + esc(i.paymentMethod) + '</td>'
+          + '<td style="color:var(--muted)">' + esc(i.notes) + '</td>'
+          + '<td>' + dot + '</td>'
+          + '<td><button class="btn btn-danger" onclick="deleteIncome(\'' + esc(i.id) + '\')">&#x2715;</button></td>'
+          + '</tr>';
+      }).join('');
+
+  document.getElementById('income').innerHTML =
+    '<div class="section-header">'
+    + '<div class="page-title">Income</div>'
+    + '<button class="btn btn-primary" onclick="toggleForm(\'income-form\')">+ Add Income</button>'
+    + '</div>'
+    + '<div class="add-form" id="income-form">'
+    + '<div class="form-grid">'
+    + '<div class="form-group"><label>Date</label><input type="date" id="i-date" value="' + today() + '"></div>'
+    + '<div class="form-group"><label>Type</label><select id="i-type">' + optionsHTML(INCOME_TYPES) + '</select></div>'
+    + '<div class="form-group"><label>Description</label><input id="i-desc" placeholder="Job or payment description"></div>'
+    + '<div class="form-group"><label>Amount ($)</label><input type="number" step="0.01" id="i-amt" placeholder="0.00"></div>'
+    + '<div class="form-group"><label>Payment Method</label><select id="i-pay">' + optionsHTML(PAY_METHODS) + '</select></div>'
+    + '<div class="form-group"><label>Notes</label><input id="i-notes" placeholder="Optional"></div>'
+    + '</div>'
+    + '<button class="btn btn-primary" onclick="addIncome()">Add Income</button>'
+    + '</div>'
+    + '<div class="totals-bar">'
+    + '<div class="total-item"><label>Total Revenue</label><span style="color:var(--positive)">' + fmt(revenue) + '</span></div>'
+    + '<div class="total-item"><label>Total In (incl. contributions)</label><span style="color:var(--accent)">' + fmt(totalIn) + '</span></div>'
+    + '</div>'
+    + '<div class="table-wrap"><table>'
+    + '<thead><tr><th>Date</th><th>Type</th><th>Description</th><th>Amount</th><th>Method</th><th>Notes</th><th>Receipt</th><th></th></tr></thead>'
+    + '<tbody>' + rows + '</tbody>'
+    + '</table></div>';
+}
+
+function addIncome() {
+  const amt = parseFloat(document.getElementById('i-amt').value);
+  if (!amt || amt <= 0) { alert('Enter a valid amount.'); return; }
+  DB.push('pp_income', {
+    id:            uid(),
+    date:          document.getElementById('i-date').value,
+    type:          document.getElementById('i-type').value,
+    description:   document.getElementById('i-desc').value,
+    amount:        amt,
+    paymentMethod: document.getElementById('i-pay').value,
+    notes:         document.getElementById('i-notes').value,
+  });
+  renderIncome();
+}
+
+function deleteIncome(id) {
+  if (!confirm('Delete this income entry?')) return;
+  DB.del('pp_income', id);
+  renderIncome();
+}
+
 // ── Mileage section ──────────────────────────────────────────────────────────
 function renderMileage() {
   const entries  = DB.get('pp_mileage') || [];
