@@ -10,6 +10,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-storage-compat.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -174,8 +175,9 @@ const firebaseConfig = {
   appId: "1:1070850498937:web:774c2fb89d1da372a00fa8"
 };
 firebase.initializeApp(firebaseConfig);
-const fsdb   = firebase.firestore();
-const fsauth = firebase.auth();
+const fsdb      = firebase.firestore();
+const fsauth    = firebase.auth();
+const fsstorage = firebase.storage();
 
 // ── Auth ─────────────────────────────────────────────────────────────────────
 const FS_KEYS = ['pp_settings','pp_income','pp_expenses','pp_mileage','pp_jobs','pp_seeded'];
