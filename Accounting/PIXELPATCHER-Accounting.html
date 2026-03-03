@@ -990,7 +990,8 @@ function renderInvoice() {
   const job = jobs.find(j => j.id === currentInvoiceJobId);
   if (!job) { currentInvoiceJobId = null; renderInvoice(); return; }
 
-  const total  = Number(job.labor) + Number(job.parts);
+  const tax    = Number(job.tax || 0);
+  const total  = Number(job.labor) + Number(job.parts) + tax;
   const jobNum = jobs.indexOf(job) + 1;
   const invNum = 'PP-' + new Date().getFullYear() + '-' + String(jobNum).padStart(3, '0');
 
@@ -1056,6 +1057,13 @@ function renderInvoice() {
               <td style="padding:12px 0;border-bottom:1px solid #f0f0f0;color:#555">Parts &amp; Materials</td>
               <td style="padding:12px 0;border-bottom:1px solid #f0f0f0;text-align:right">
                 $${Number(job.parts).toFixed(2)}
+              </td>
+            </tr>` : ''}
+          ${tax > 0 ? `
+            <tr>
+              <td style="padding:12px 0;border-bottom:1px solid #f0f0f0;color:#555">Sales Tax</td>
+              <td style="padding:12px 0;border-bottom:1px solid #f0f0f0;text-align:right">
+                $${tax.toFixed(2)}
               </td>
             </tr>` : ''}
         </tbody>
