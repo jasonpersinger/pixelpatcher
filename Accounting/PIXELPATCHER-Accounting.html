@@ -294,6 +294,52 @@ fsauth.onAuthStateChanged(async user => {
   }
 });
 
+// ── Receipt upload ────────────────────────────────────────────────────────────
+let _receiptExpenseId = null;
+
+function openReceiptModal(expenseId) {
+  _receiptExpenseId = expenseId;
+  document.getElementById('receipt-progress').textContent = '';
+  document.getElementById('receipt-file-input').value   = '';
+  document.getElementById('receipt-camera-input').value = '';
+  const modal = document.getElementById('receipt-modal');
+  modal.style.display = 'flex';
+}
+
+function closeReceiptModal() {
+  document.getElementById('receipt-modal').style.display = 'none';
+  _receiptExpenseId = null;
+}
+
+function handleReceiptFile(event) {
+  const file = event.target.files[0];
+  if (!file || !_receiptExpenseId) return;
+  const user = fsauth.currentUser;
+  if (!user) return;
+
+  const progressEl = document.getElementById('receipt-progress');
+  progressEl.textContent = 'Uploading\u2026';
+
+  const path = 'users/' + user.uid + '/receipts/' + _receiptExpenseId;
+  const ref  = fsstorage.ref(path);
+
+  ref.put(file).then(snapshot => snapshot.ref.getDownloadURL()).then(url => {
+    const expenses = DB.get('pp_expenses') || [];
+    DB.set('pp_expenses', expenses.map(e =>
+      e.id === _receiptExpenseId ? Object.assign({}, e, { receiptUrl: url }) : e
+    ));
+    closeReceiptModal();
+    renderExpenses();
+  }).catch(err => {
+    console.warn('Receipt upload failed:', err);
+    progressEl.textContent = 'Upload failed. Please try again.';
+  });
+}
+
+function viewReceipt(url) {
+  window.open(url, '_blank', 'noopener');
+}
+
 // ── XSS safety: all user strings escaped before innerHTML insertion ──────────
 function esc(str) {
   if (str === null || str === undefined) return '';
