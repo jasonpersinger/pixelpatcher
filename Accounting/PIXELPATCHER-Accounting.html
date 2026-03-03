@@ -846,6 +846,8 @@ function renderJobs() {
           <input id="j-customer" placeholder="Full name"></div>
         <div class="form-group"><label>Phone</label>
           <input id="j-phone" placeholder="555-000-0000"></div>
+        <div class="form-group"><label>Address <span style="color:var(--muted);font-weight:400">(optional)</span></label>
+          <input id="j-address" placeholder="Street, City, State"></div>
         <div class="form-group"><label>Issue Description</label>
           <input id="j-issue" placeholder="What's wrong?"></div>
         <div class="form-group"><label>Service Performed</label>
@@ -905,6 +907,7 @@ function addJob() {
   DB.push('pp_jobs', {
     id: uid(), date: document.getElementById('j-date').value,
     customer, phone: document.getElementById('j-phone').value,
+    address: document.getElementById('j-address').value,
     issue: document.getElementById('j-issue').value,
     service: document.getElementById('j-service').value,
     labor: parseFloat(document.getElementById('j-labor').value) || 0,
