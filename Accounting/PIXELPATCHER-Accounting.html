@@ -903,6 +903,154 @@ function renderCustomerList() {
     + '</table></div>';
 }
 
+function addFollowup(customerName, phone) {
+  const note    = (document.getElementById('fu-note')  || {}).value || '';
+  const dueDate = (document.getElementById('fu-date')  || {}).value || '';
+  if (!note.trim() || !dueDate) { alert('Please add a note and due date.'); return; }
+  DB.push('pp_followups', { id: uid(), customerName, phone, note: note.trim(), dueDate, done: false });
+  renderCustomerDetail(customerName);
+}
+
+function markFollowupDoneFromCustomer(id, name) {
+  const followups = DB.get('pp_followups') || [];
+  DB.set('pp_followups', followups.map(f => f.id === id ? Object.assign({}, f, { done: true }) : f));
+  renderCustomerDetail(name);
+}
+
+function renderCustomerFollowups(name, phone) {
+  const container = document.getElementById('customers');
+  const all = (DB.get('pp_followups') || [])
+    .filter(f => f.customerName === name)
+    .slice().sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+  const d = new Date(); d.setDate(d.getDate() + 7);
+  const defaultDate = d.toISOString().slice(0, 10);
+  const todayStr = today();
+
+  const wrapper = document.createElement('div');
+  wrapper.style.marginTop = '28px';
+
+  // Header row
+  const hdr = document.createElement('div');
+  hdr.style.cssText = 'display:flex;align-items:center;justify-content:space-between;margin-bottom:12px';
+  const lbl = document.createElement('div');
+  lbl.style.cssText = 'font-weight:700;font-family:var(--font)';
+  lbl.textContent = 'Follow-ups';
+  const addBtn = document.createElement('button');
+  addBtn.className = 'btn btn-primary';
+  addBtn.style.cssText = 'font-size:12px;padding:6px 14px';
+  addBtn.textContent = '+ Follow-up';
+  addBtn.addEventListener('click', () => toggleForm('fu-inline'));
+  hdr.appendChild(lbl);
+  hdr.appendChild(addBtn);
+  wrapper.appendChild(hdr);
+
+  // Inline form
+  const form = document.createElement('div');
+  form.className = 'add-form';
+  form.id = 'fu-inline';
+
+  const grid = document.createElement('div');
+  grid.className = 'form-grid';
+
+  const dateGroup = document.createElement('div');
+  dateGroup.className = 'form-group';
+  const dateLbl = document.createElement('label');
+  dateLbl.textContent = 'Due Date';
+  const dateInput = document.createElement('input');
+  dateInput.type = 'date';
+  dateInput.id = 'fu-date';
+  dateInput.value = defaultDate;
+  dateGroup.appendChild(dateLbl);
+  dateGroup.appendChild(dateInput);
+
+  const noteGroup = document.createElement('div');
+  noteGroup.className = 'form-group';
+  noteGroup.style.gridColumn = 'span 2';
+  const noteLbl = document.createElement('label');
+  noteLbl.textContent = 'Note';
+  const noteTA = document.createElement('textarea');
+  noteTA.id = 'fu-note';
+  noteTA.rows = 2;
+  noteTA.placeholder = 'What to follow up about?';
+  noteTA.style.cssText = 'width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:8px;color:var(--text);font-family:var(--font);font-size:13px;resize:vertical';
+  noteGroup.appendChild(noteLbl);
+  noteGroup.appendChild(noteTA);
+
+  grid.appendChild(dateGroup);
+  grid.appendChild(noteGroup);
+  form.appendChild(grid);
+
+  const saveBtn = document.createElement('button');
+  saveBtn.className = 'btn btn-primary';
+  saveBtn.textContent = 'Save Follow-up';
+  saveBtn.addEventListener('click', () => addFollowup(name, phone));
+  form.appendChild(saveBtn);
+  wrapper.appendChild(form);
+
+  // Table
+  const tableWrap = document.createElement('div');
+  tableWrap.className = 'table-wrap';
+  tableWrap.style.marginTop = '8px';
+  const table = document.createElement('table');
+  const thead = document.createElement('thead');
+  const hrow = document.createElement('tr');
+  ['Due Date', 'Note', ''].forEach(h => {
+    const th = document.createElement('th');
+    th.textContent = h;
+    hrow.appendChild(th);
+  });
+  thead.appendChild(hrow);
+  table.appendChild(thead);
+
+  const tbody = document.createElement('tbody');
+  if (all.length === 0) {
+    const tr = document.createElement('tr');
+    const td = document.createElement('td');
+    td.colSpan = 3;
+    td.style.cssText = 'color:var(--muted);text-align:center;padding:12px';
+    td.textContent = 'No follow-ups yet';
+    tr.appendChild(td);
+    tbody.appendChild(tr);
+  } else {
+    all.forEach(f => {
+      const tr = document.createElement('tr');
+      tr.style.opacity = f.done ? '0.5' : '1';
+
+      const tdDate = document.createElement('td');
+      const overdue = !f.done && f.dueDate < todayStr;
+      tdDate.style.color = overdue ? 'var(--negative)' : f.done ? 'var(--muted)' : 'inherit';
+      tdDate.textContent = f.dueDate;
+
+      const tdNote = document.createElement('td');
+      tdNote.textContent = f.note;
+
+      const tdAction = document.createElement('td');
+      if (f.done) {
+        const span = document.createElement('span');
+        span.style.cssText = 'color:var(--muted);font-size:11px';
+        span.textContent = 'Done';
+        tdAction.appendChild(span);
+      } else {
+        const btn = document.createElement('button');
+        btn.className = 'btn btn-success';
+        btn.style.cssText = 'font-size:11px;padding:4px 10px';
+        btn.textContent = 'Done';
+        btn.addEventListener('click', () => markFollowupDoneFromCustomer(f.id, name));
+        tdAction.appendChild(btn);
+      }
+
+      tr.appendChild(tdDate);
+      tr.appendChild(tdNote);
+      tr.appendChild(tdAction);
+      tbody.appendChild(tr);
+    });
+  }
+  table.appendChild(tbody);
+  tableWrap.appendChild(table);
+  wrapper.appendChild(tableWrap);
+  container.appendChild(wrapper);
+}
+
 function renderCustomerDetail(name) {
   const jobs = (DB.get('pp_jobs') || []).filter(j => j.customer === name)
                                          .slice().sort((a, b) => b.date.localeCompare(a.date));
@@ -954,6 +1102,7 @@ function renderCustomerDetail(name) {
     + '<thead><tr><th>Date</th><th>Issue</th><th>Service</th><th>Labor</th><th>Parts</th><th>Total</th><th>Status</th><th>Paid</th></tr></thead>'
     + '<tbody>' + rows + '</tbody>'
     + '</table></div>';
+  renderCustomerFollowups(name, phone);
 }
 
 // ── Follow-ups section ────────────────────────────────────────────────────────
