@@ -1239,57 +1239,192 @@ function renderCustomerFollowups(name, phone) {
   container.appendChild(wrapper);
 }
 
+function editCustomer(id) {
+  const custs = DB.get('pp_customers') || [];
+  const rec   = custs.find(c => c.id === id);
+  if (!rec) return;
+  const fullName = rec.firstName + (rec.lastName ? ' ' + rec.lastName : '');
+  const prefill  = {
+    fname: rec.firstName, lname: rec.lastName, phone: rec.phone,
+    email: rec.email, street: rec.street, city: rec.city,
+    state: rec.state, zip: rec.zip, notes: rec.notes,
+  };
+
+  const section = document.getElementById('customers');
+  section.textContent = '';
+
+  const hdr = document.createElement('div');
+  hdr.className = 'section-header';
+  const backBtn = document.createElement('button');
+  backBtn.className = 'btn btn-ghost';
+  backBtn.style.cssText = 'font-size:12px;padding:6px 14px';
+  backBtn.textContent = '\u2190 ' + fullName;
+  backBtn.addEventListener('click', () => showCustomer(fullName));
+  const titleEl = document.createElement('div');
+  titleEl.className = 'page-title';
+  titleEl.style.marginBottom = '0';
+  titleEl.textContent = 'Edit Customer';
+  hdr.appendChild(backBtn);
+  hdr.appendChild(titleEl);
+  section.appendChild(hdr);
+
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.appendChild(buildCustomerFormDOM(prefill, id));
+  section.appendChild(card);
+}
+
 function renderCustomerDetail(name) {
-  const jobs = (DB.get('pp_jobs') || []).filter(j => j.customer === name)
-                                         .slice().sort((a, b) => b.date.localeCompare(a.date));
-  const recent      = jobs[0] || {};
-  const phone       = recent.phone   || '';
-  const address     = recent.address || '';
+  const custs     = DB.get('pp_customers') || [];
+  const rec       = custs.find(c => (c.firstName + ' ' + c.lastName).trim() === name.trim()) || {};
+  const jobs      = (DB.get('pp_jobs') || []).filter(j => j.customer === name)
+                                              .slice().sort((a, b) => b.date.localeCompare(a.date));
+  const phone       = rec.phone || (jobs[0] || {}).phone || '';
   const totalSpent  = jobs.filter(j => j.paid).reduce((s, j) => s + Number(j.labor) + Number(j.parts) + Number(j.tax || 0), 0);
   const outstanding = jobs.filter(j => !j.paid && j.status !== 'Closed')
                           .reduce((s, j) => s + Number(j.labor) + Number(j.parts) + Number(j.tax || 0), 0);
-  const dates       = jobs.map(j => j.date).sort();
-  const firstVisit  = dates[0] || '';
-  const lastVisit   = dates[dates.length - 1] || '';
+  const dates      = jobs.map(j => j.date).sort();
+  const firstVisit = dates[0] || '';
+  const lastVisit  = dates[dates.length - 1] || '';
 
-  const rows = jobs.map(j => {
-    const total = Number(j.labor) + Number(j.parts) + Number(j.tax || 0);
-    return '<tr>'
-      + '<td>' + esc(j.date) + '</td>'
-      + '<td>' + esc(j.issue) + '</td>'
-      + '<td>' + esc(j.service) + '</td>'
-      + '<td>' + fmt(j.labor) + '</td>'
-      + '<td>' + fmt(j.parts) + '</td>'
-      + '<td style="color:var(--positive)">' + fmt(total) + '</td>'
-      + '<td>' + statusBadge(j.status) + '</td>'
-      + '<td>' + (j.paid
-          ? '<span style="color:var(--positive)">&#x2713; Paid</span>'
-          : '<span style="color:var(--negative)">Unpaid</span>') + '</td>'
-      + '</tr>';
-  }).join('') || '<tr><td colspan="8" style="color:var(--muted);text-align:center;padding:24px">No jobs</td></tr>';
+  const section = document.getElementById('customers');
+  section.textContent = '';
 
-  document.getElementById('customers').innerHTML =
-    '<div class="section-header">'
-    + '<button class="btn btn-ghost" style="font-size:12px;padding:6px 14px" onclick="showCustomer(null)">&larr; All Customers</button>'
-    + '<div class="page-title" style="margin-bottom:0">' + esc(name) + '</div>'
-    + '</div>'
-    + '<div class="card" style="display:flex;gap:32px;margin-bottom:20px">'
-    + '<div><div style="font-size:11px;color:var(--muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:1px">Phone</div>'
-    + '<div>' + (esc(phone) || '&mdash;') + '</div></div>'
-    + '<div><div style="font-size:11px;color:var(--muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:1px">Address</div>'
-    + '<div>' + (esc(address) || '&mdash;') + '</div></div>'
-    + '</div>'
-    + '<div class="kpi-grid" style="grid-template-columns:repeat(5,1fr);margin-bottom:20px">'
-    + '<div class="kpi-card"><div class="kpi-label">Total Spent</div><div class="kpi-value kpi-positive">' + fmt(totalSpent) + '</div></div>'
-    + '<div class="kpi-card"><div class="kpi-label">Outstanding</div><div class="kpi-value kpi-negative">' + fmt(outstanding) + '</div></div>'
-    + '<div class="kpi-card"><div class="kpi-label">Total Jobs</div><div class="kpi-value">' + jobs.length + '</div></div>'
-    + '<div class="kpi-card"><div class="kpi-label">First Visit</div><div class="kpi-value kpi-accent" style="font-size:15px">' + (esc(firstVisit) || '&mdash;') + '</div></div>'
-    + '<div class="kpi-card"><div class="kpi-label">Last Visit</div><div class="kpi-value kpi-accent" style="font-size:15px">' + (esc(lastVisit) || '&mdash;') + '</div></div>'
-    + '</div>'
-    + '<div class="table-wrap"><table>'
-    + '<thead><tr><th>Date</th><th>Issue</th><th>Service</th><th>Labor</th><th>Parts</th><th>Total</th><th>Status</th><th>Paid</th></tr></thead>'
-    + '<tbody>' + rows + '</tbody>'
-    + '</table></div>';
+  // Header
+  const hdr = document.createElement('div');
+  hdr.className = 'section-header';
+  const backBtn = document.createElement('button');
+  backBtn.className = 'btn btn-ghost';
+  backBtn.style.cssText = 'font-size:12px;padding:6px 14px';
+  backBtn.textContent = '\u2190 All Customers';
+  backBtn.addEventListener('click', () => showCustomer(null));
+  const nameEl = document.createElement('div');
+  nameEl.className = 'page-title';
+  nameEl.style.marginBottom = '0';
+  nameEl.textContent = name;
+  hdr.appendChild(backBtn);
+  hdr.appendChild(nameEl);
+  if (rec.id) {
+    const editBtn = document.createElement('button');
+    editBtn.className = 'btn btn-ghost';
+    editBtn.style.cssText = 'font-size:12px;padding:6px 14px';
+    editBtn.textContent = 'Edit';
+    editBtn.addEventListener('click', () => editCustomer(rec.id));
+    hdr.appendChild(editBtn);
+  }
+  section.appendChild(hdr);
+
+  // Contact card
+  const contactFields = [
+    ['Phone', rec.phone], ['Email', rec.email], ['Street', rec.street],
+    ['City', rec.city], ['State', rec.state], ['Zip', rec.zip], ['Notes', rec.notes],
+  ].filter(([, v]) => v);
+
+  const contactCard = document.createElement('div');
+  contactCard.className = 'card';
+  contactCard.style.cssText = 'display:flex;gap:32px;flex-wrap:wrap;margin-bottom:20px';
+  if (contactFields.length === 0) {
+    const span = document.createElement('span');
+    span.style.color = 'var(--muted)';
+    span.textContent = 'No contact info on file';
+    contactCard.appendChild(span);
+  } else {
+    contactFields.forEach(([label, val]) => {
+      const item = document.createElement('div');
+      const lbl  = document.createElement('div');
+      lbl.style.cssText = 'font-size:11px;color:var(--muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:1px';
+      lbl.textContent = label;
+      const valEl = document.createElement('div');
+      valEl.textContent = val;
+      item.appendChild(lbl);
+      item.appendChild(valEl);
+      contactCard.appendChild(item);
+    });
+  }
+  section.appendChild(contactCard);
+
+  // KPI grid
+  const kpiGrid = document.createElement('div');
+  kpiGrid.className = 'kpi-grid';
+  kpiGrid.style.cssText = 'grid-template-columns:repeat(5,1fr);margin-bottom:20px';
+  [
+    { label: 'Total Spent',  value: fmt(totalSpent),  cls: 'kpi-positive' },
+    { label: 'Outstanding',  value: fmt(outstanding), cls: 'kpi-negative' },
+    { label: 'Total Jobs',   value: jobs.length,      cls: '' },
+    { label: 'First Visit',  value: firstVisit || '—', cls: 'kpi-accent', small: true },
+    { label: 'Last Visit',   value: lastVisit  || '—', cls: 'kpi-accent', small: true },
+  ].forEach(({ label, value, cls, small }) => {
+    const card = document.createElement('div');
+    card.className = 'kpi-card';
+    const lbl = document.createElement('div');
+    lbl.className = 'kpi-label';
+    lbl.textContent = label;
+    const val = document.createElement('div');
+    val.className = 'kpi-value' + (cls ? ' ' + cls : '');
+    if (small) val.style.fontSize = '15px';
+    val.textContent = value;
+    card.appendChild(lbl);
+    card.appendChild(val);
+    kpiGrid.appendChild(card);
+  });
+  section.appendChild(kpiGrid);
+
+  // Jobs table
+  const wrap  = document.createElement('div');
+  wrap.className = 'table-wrap';
+  const table = document.createElement('table');
+  const thead = document.createElement('thead');
+  const hrow  = document.createElement('tr');
+  ['Date','Issue','Service','Labor','Parts','Total','Status','Paid'].forEach(h => {
+    const th = document.createElement('th'); th.textContent = h; hrow.appendChild(th);
+  });
+  thead.appendChild(hrow);
+  table.appendChild(thead);
+
+  const tbody = document.createElement('tbody');
+  if (jobs.length === 0) {
+    const tr = document.createElement('tr');
+    const td = document.createElement('td');
+    td.colSpan = 8; td.style.cssText = 'color:var(--muted);text-align:center;padding:24px';
+    td.textContent = 'No jobs';
+    tr.appendChild(td); tbody.appendChild(tr);
+  } else {
+    jobs.forEach(j => {
+      const total = Number(j.labor) + Number(j.parts) + Number(j.tax || 0);
+      const tr    = document.createElement('tr');
+      [
+        { text: j.date },
+        { text: j.issue },
+        { text: j.service },
+        { text: fmt(j.labor) },
+        { text: fmt(j.parts) },
+        { text: fmt(total), color: 'var(--positive)' },
+      ].forEach(({ text, color }) => {
+        const td = document.createElement('td');
+        td.textContent = text;
+        if (color) td.style.color = color;
+        tr.appendChild(td);
+      });
+      const tdStatus = document.createElement('td');
+      const badgeClsMap = { 'Pending':'pending','In Progress':'progress','Complete':'complete','Awaiting Parts':'awaiting','Closed':'closed' };
+      const badge = document.createElement('span');
+      badge.className = 'badge badge-' + (badgeClsMap[j.status] || 'pending');
+      badge.textContent = j.status;
+      tdStatus.appendChild(badge);
+      tr.appendChild(tdStatus);
+      const tdPaid = document.createElement('td');
+      const paidSpan = document.createElement('span');
+      paidSpan.style.color = j.paid ? 'var(--positive)' : 'var(--negative)';
+      paidSpan.textContent  = j.paid ? '\u2713 Paid' : 'Unpaid';
+      tdPaid.appendChild(paidSpan);
+      tr.appendChild(tdPaid);
+      tbody.appendChild(tr);
+    });
+  }
+  table.appendChild(tbody);
+  wrap.appendChild(table);
+  section.appendChild(wrap);
+
   renderCustomerFollowups(name, phone);
 }
 
