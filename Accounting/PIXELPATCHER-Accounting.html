@@ -180,6 +180,7 @@
       <button class="nav-btn" data-section="invoice">Invoice</button>
       <button class="nav-btn" data-section="expenses">Expenses</button>
       <button class="nav-btn" data-section="mileage">Mileage</button>
+      <button class="nav-btn" data-section="tax">Tax</button>
       <button class="nav-btn" data-section="settings">Settings</button>
     </nav>
     <div class="sidebar-footer">
@@ -199,6 +200,7 @@
     <section id="invoice"   class="section"></section>
     <section id="expenses"  class="section"></section>
     <section id="mileage"   class="section"></section>
+    <section id="tax"       class="section"></section>
     <section id="settings"  class="section"></section>
   </main>
 </div>
@@ -374,6 +376,7 @@ function renderSection(name) {
   else if (name === 'jobs')     renderJobs();
   else if (name === 'expenses') renderExpenses();
   else if (name === 'mileage')  renderMileage();
+  else if (name === 'tax')      renderTax();
   else if (name === 'settings') renderSettings();
   else if (name === 'invoice')  renderInvoice();
 }
