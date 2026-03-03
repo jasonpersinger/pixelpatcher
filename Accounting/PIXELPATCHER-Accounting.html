@@ -502,11 +502,11 @@ function renderExpenses() {
     <div class="table-wrap"><table>
       <thead><tr>
         <th>Date</th><th>Category</th><th>Description</th><th>Vendor</th>
-        <th>Amount</th><th>Method</th><th>Notes</th><th></th>
+        <th>Amount</th><th>Method</th><th>Notes</th><th>Receipt</th><th></th>
       </tr></thead>
       <tbody>
         ${expenses.length === 0
-          ? '<tr><td colspan="8" style="color:var(--muted);text-align:center;padding:24px">No expenses yet</td></tr>'
+          ? '<tr><td colspan="9" style="color:var(--muted);text-align:center;padding:24px">No expenses yet</td></tr>'
           : expenses.slice().reverse().map(e => `
             <tr>
               <td>${esc(e.date)}</td><td>${esc(e.category)}</td>
@@ -514,6 +514,17 @@ function renderExpenses() {
               <td style="color:var(--negative)">${fmt(e.amount)}</td>
               <td>${esc(e.paymentMethod)}</td>
               <td style="color:var(--muted)">${esc(e.notes)}</td>
+              <td>
+                ${e.receiptUrl
+                  ? `<button class="btn" title="View receipt"
+                       onclick="viewReceipt('${esc(e.receiptUrl)}')"
+                       style="color:var(--positive);background:none;border:none;
+                              font-size:16px;cursor:pointer;padding:0 4px">&#x25CF;</button>`
+                  : `<button class="btn" title="Attach receipt"
+                       onclick="openReceiptModal('${esc(e.id)}')"
+                       style="color:var(--negative);background:none;border:none;
+                              font-size:16px;cursor:pointer;padding:0 4px">&#x25CF;</button>`}
+              </td>
               <td><button class="btn btn-danger" onclick="deleteExpense('${esc(e.id)}')">&#x2715;</button></td>
             </tr>`).join('')}
       </tbody>
