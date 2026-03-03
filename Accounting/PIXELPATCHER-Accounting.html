@@ -1159,17 +1159,32 @@ function renderDashboard() {
 
   document.getElementById('dashboard').innerHTML = `
     <div class="page-title">Dashboard &mdash; 2026</div>
-    <div class="kpi-grid">
-      ${kpi('Total Income',   fmt(revenue),   revenue > 0 ? 'kpi-positive' : '', 'Year to Date')}
-      ${kpi('Total Expenses', fmt(totalExp),  'kpi-negative', 'Year to Date')}
-      ${kpi('Net Profit',     fmt(netProfit), netProfit >= 0 ? 'kpi-positive' : 'kpi-negative', 'Year to Date')}
-      ${kpi('Jobs Completed', jobsDone,       'kpi-accent',   'Year to Date')}
-      ${kpi('Avg Job Value',  fmt(avgJob),    avgJob > 0 ? 'kpi-positive' : '', 'Per Completed Job')}
-      ${kpi('Miles Driven',   totalMiles.toFixed(1), 'kpi-accent', 'Total YTD')}
-      ${kpi('Mileage Deduction', fmt(mileDed), 'kpi-positive', 'IRS $' + settings.irsRate + '/mile')}
-      ${kpi('Tax Reserve (' + Math.round(settings.taxReserve * 100) + '%)',
-            fmt(taxReserve), 'kpi-warning', 'Set This Aside')}
-      ${kpi('Sales Tax Collected', fmt(salesTaxCollected), 'kpi-warning', 'Set Aside')}
+    <div style="margin-bottom:8px">
+      <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;
+                  letter-spacing:1px;margin-bottom:12px">P&amp;L &mdash; Year to Date</div>
+      <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
+        ${kpi('Total Income',   fmt(revenue),   revenue > 0 ? 'kpi-positive' : '', 'Year to Date')}
+        ${kpi('Total Expenses', fmt(totalExp),  'kpi-negative', 'Year to Date')}
+        ${kpi('Net Profit',     fmt(netProfit), netProfit >= 0 ? 'kpi-positive' : 'kpi-negative', 'Year to Date')}
+      </div>
+    </div>
+    <div style="margin-bottom:8px">
+      <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;
+                  letter-spacing:1px;margin-bottom:12px">Operations</div>
+      <div class="kpi-grid" style="grid-template-columns:repeat(2,1fr)">
+        ${kpi('Jobs Completed', jobsDone,    'kpi-accent', 'Year to Date')}
+        ${kpi('Avg Job Value',  fmt(avgJob), avgJob > 0 ? 'kpi-positive' : '', 'Per Completed Job')}
+      </div>
+    </div>
+    <div style="margin-bottom:28px">
+      <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;
+                  letter-spacing:1px;margin-bottom:12px">Set Aside</div>
+      <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
+        ${kpi('Tax Reserve (' + Math.round(settings.taxReserve * 100) + '%)',
+              fmt(taxReserve), 'kpi-warning', 'Set This Aside')}
+        ${kpi('Sales Tax Collected', fmt(salesTaxCollected), 'kpi-warning', 'Set Aside')}
+        ${kpi('Mileage Deduction', fmt(mileDed), 'kpi-positive', 'IRS $' + settings.irsRate + '/mile')}
+      </div>
     </div>
     <div class="card">
       <div style="font-size:12px;font-weight:600;color:var(--muted);
