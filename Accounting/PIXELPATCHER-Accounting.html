@@ -1334,7 +1334,8 @@ function statusBadge(status) {
 }
 
 function renderJobs() {
-  const jobs = DB.get('pp_jobs') || [];
+  const jobs      = DB.get('pp_jobs') || [];
+  const customers = DB.get('pp_customers') || [];
   const done = jobs.filter(j => j.status === 'Complete' || j.status === 'Closed').length;
   const linkedExpenseSum   = {};
   const linkedExpenseCount = {};
@@ -1353,12 +1354,23 @@ function renderJobs() {
       <div class="form-grid">
         <div class="form-group"><label>Date</label>
           <input type="date" id="j-date" value="${today()}"></div>
-        <div class="form-group"><label>Customer Name</label>
-          <input id="j-customer" placeholder="Full name"></div>
+        <div class="form-group"><label>First Name</label>
+          <input id="j-fname" placeholder="First name" oninput="autoFillCustomer()" list="customer-list" autocomplete="off"></div>
+        <datalist id="customer-list"></datalist>
+        <div class="form-group"><label>Last Name</label>
+          <input id="j-lname" placeholder="Last name"></div>
         <div class="form-group"><label>Phone</label>
           <input id="j-phone" placeholder="555-000-0000"></div>
-        <div class="form-group"><label>Address <span style="color:var(--muted);font-weight:400">(optional)</span></label>
-          <input id="j-address" placeholder="Street, City, State"></div>
+        <div class="form-group"><label>Email <span style="color:var(--muted);font-weight:400">(optional)</span></label>
+          <input id="j-email" type="email" placeholder="jane@example.com"></div>
+        <div class="form-group"><label>Street <span style="color:var(--muted);font-weight:400">(optional)</span></label>
+          <input id="j-street" placeholder="123 Main St"></div>
+        <div class="form-group"><label>City <span style="color:var(--muted);font-weight:400">(optional)</span></label>
+          <input id="j-city" placeholder="Springfield"></div>
+        <div class="form-group"><label>State <span style="color:var(--muted);font-weight:400">(optional)</span></label>
+          <input id="j-state" placeholder="IL" style="max-width:80px"></div>
+        <div class="form-group"><label>Zip <span style="color:var(--muted);font-weight:400">(optional)</span></label>
+          <input id="j-zip" placeholder="62701" style="max-width:120px"></div>
         <div class="form-group"><label>Issue Description</label>
           <input id="j-issue" placeholder="What's wrong?"></div>
         <div class="form-group"><label>Service Performed</label>
@@ -1417,20 +1429,92 @@ function renderJobs() {
       </tbody>
     </table></div>
   `;
+
+  // Populate customer autocomplete datalist
+  const dl = document.getElementById('customer-list');
+  if (dl) {
+    dl.textContent = '';
+    customers.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.firstName + ' ' + c.lastName;
+      opt.dataset.customerId = c.id;
+      dl.appendChild(opt);
+    });
+  }
+}
+
+function autoFillCustomer() {
+  const input = document.getElementById('j-fname');
+  if (!input) return;
+  const typed = input.value.trim();
+  const custs = DB.get('pp_customers') || [];
+  const match = custs.find(c =>
+    (c.firstName + ' ' + c.lastName).toLowerCase() === typed.toLowerCase() ||
+    c.firstName.toLowerCase() === typed.toLowerCase()
+  );
+  if (!match) return;
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+  set('j-fname',  match.firstName);
+  set('j-lname',  match.lastName);
+  set('j-phone',  match.phone);
+  set('j-email',  match.email);
+  set('j-street', match.street);
+  set('j-city',   match.city);
+  set('j-state',  match.state);
+  set('j-zip',    match.zip);
+  document.getElementById('j-fname').dataset.customerId = match.id;
 }
 
 function addJob() {
-  const customer = document.getElementById('j-customer').value.trim();
-  if (!customer) { alert('Customer name is required.'); return; }
+  const fname = document.getElementById('j-fname').value.trim();
+  const lname = document.getElementById('j-lname').value.trim();
+  if (!fname) { alert('Customer first name is required.'); return; }
+  const fullName = fname + (lname ? ' ' + lname : '');
+
+  // Find or create customer record
+  const custs    = DB.get('pp_customers') || [];
+  const fnameEl  = document.getElementById('j-fname');
+  let customerId = fnameEl.dataset.customerId || null;
+  let customer   = customerId ? custs.find(c => c.id === customerId) : null;
+
+  if (!customer) {
+    customer = custs.find(c =>
+      (c.firstName + ' ' + c.lastName).toLowerCase() === fullName.toLowerCase()
+    );
+  }
+
+  const contactData = {
+    firstName: fname,
+    lastName:  lname,
+    phone:     document.getElementById('j-phone').value,
+    email:     document.getElementById('j-email').value,
+    street:    document.getElementById('j-street').value,
+    city:      document.getElementById('j-city').value,
+    state:     document.getElementById('j-state').value,
+    zip:       document.getElementById('j-zip').value,
+  };
+
+  if (customer) {
+    customerId = customer.id;
+    DB.set('pp_customers', custs.map(c =>
+      c.id === customerId ? Object.assign({}, c, contactData) : c
+    ));
+  } else {
+    customerId = uid();
+    DB.push('pp_customers', Object.assign({ id: customerId, notes: '' }, contactData));
+  }
+
   const parts = parseFloat(document.getElementById('j-parts').value) || 0;
   const tax   = parts * (getSettings().taxRate || 0);
   DB.push('pp_jobs', {
     id: uid(), date: document.getElementById('j-date').value,
-    customer, phone: document.getElementById('j-phone').value,
-    address: document.getElementById('j-address').value,
-    issue: document.getElementById('j-issue').value,
+    customer: fullName,
+    customerId,
+    phone:   contactData.phone,
+    address: [contactData.street, contactData.city, contactData.state].filter(Boolean).join(', '),
+    issue:   document.getElementById('j-issue').value,
     service: document.getElementById('j-service').value,
-    labor: parseFloat(document.getElementById('j-labor').value) || 0,
+    labor:   parseFloat(document.getElementById('j-labor').value) || 0,
     parts,
     tax,
     status: document.getElementById('j-status').value,
