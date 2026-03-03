@@ -907,6 +907,8 @@ function renderJobs() {
 function addJob() {
   const customer = document.getElementById('j-customer').value.trim();
   if (!customer) { alert('Customer name is required.'); return; }
+  const parts = parseFloat(document.getElementById('j-parts').value) || 0;
+  const tax   = parts * (getSettings().taxRate || 0);
   DB.push('pp_jobs', {
     id: uid(), date: document.getElementById('j-date').value,
     customer, phone: document.getElementById('j-phone').value,
@@ -914,7 +916,8 @@ function addJob() {
     issue: document.getElementById('j-issue').value,
     service: document.getElementById('j-service').value,
     labor: parseFloat(document.getElementById('j-labor').value) || 0,
-    parts: parseFloat(document.getElementById('j-parts').value) || 0,
+    parts,
+    tax,
     status: document.getElementById('j-status').value,
     paid: false,
   });
