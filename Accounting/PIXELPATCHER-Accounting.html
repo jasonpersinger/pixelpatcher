@@ -519,11 +519,11 @@ function renderExpenses() {
                   ? `<button class="btn" title="View receipt"
                        onclick="viewReceipt('${esc(e.receiptUrl)}')"
                        style="color:var(--positive);background:none;border:none;
-                              font-size:16px;cursor:pointer;padding:0 4px">&#x25CF;</button>`
+                              font-size:22px;cursor:pointer;padding:0 4px">&#x25CF;</button>`
                   : `<button class="btn" title="Attach receipt"
                        onclick="openReceiptModal('${esc(e.id)}')"
                        style="color:var(--negative);background:none;border:none;
-                              font-size:16px;cursor:pointer;padding:0 4px">&#x25CF;</button>`}
+                              font-size:22px;cursor:pointer;padding:0 4px">&#x25CF;</button>`}
               </td>
               <td><button class="btn btn-danger" onclick="deleteExpense('${esc(e.id)}')">&#x2715;</button></td>
             </tr>`).join('')}
