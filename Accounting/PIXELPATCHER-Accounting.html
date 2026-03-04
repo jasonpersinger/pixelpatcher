@@ -1699,7 +1699,11 @@ function renderMileage() {
               <td style="color:var(--accent)">${Number(m.miles).toFixed(1)}</td>
               <td style="color:var(--positive)">${fmt(m.deduction)}</td>
               <td style="color:var(--muted)">${esc(m.notes)}</td>
-              <td><button class="btn btn-danger" onclick="deleteMileage('${esc(m.id)}')">&#x2715;</button></td>
+              <td style="display:flex;gap:6px;align-items:center">
+                <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px"
+                  onclick="editMileage('${esc(m.id)}')">&#x270E;</button>
+                <button class="btn btn-danger" onclick="deleteMileage('${esc(m.id)}')">&#x2715;</button>
+              </td>
             </tr>`).join('')}
       </tbody>
     </table></div>
@@ -1724,6 +1728,49 @@ function addMileage() {
 function deleteMileage(id) {
   if (!confirm('Delete this trip?')) return;
   DB.del('pp_mileage', id);
+  renderMileage();
+}
+
+function editMileage(id) {
+  const entries = DB.get('pp_mileage') || [];
+  const m = entries.find(x => x.id === id);
+  if (!m) return;
+  document.getElementById('edit-modal-title').textContent = 'Edit Trip';
+  document.getElementById('edit-modal-body').innerHTML = `
+    <div class="form-grid">
+      <div class="form-group"><label>Date</label>
+        <input type="date" id="mm-date" value="${esc(m.date)}"></div>
+      <div class="form-group"><label>From</label>
+        <input id="mm-from" value="${esc(m.from)}"></div>
+      <div class="form-group"><label>To</label>
+        <input id="mm-to" value="${esc(m.to)}"></div>
+      <div class="form-group"><label>Purpose</label>
+        <input id="mm-purpose" value="${esc(m.purpose)}"></div>
+      <div class="form-group"><label>Miles</label>
+        <input type="number" step="0.1" id="mm-miles" value="${esc(String(m.miles))}"></div>
+      <div class="form-group"><label>Notes</label>
+        <input id="mm-notes" value="${esc(m.notes || '')}"></div>
+    </div>
+  `;
+  document.getElementById('edit-modal-save').onclick = () => saveEditMileage(id);
+  document.getElementById('edit-modal').style.display = 'flex';
+}
+
+function saveEditMileage(id) {
+  const miles = parseFloat(document.getElementById('mm-miles').value);
+  if (!miles || miles <= 0) { alert('Enter a valid mileage.'); return; }
+  const rate = getSettings().irsRate;
+  const entries = DB.get('pp_mileage') || [];
+  DB.set('pp_mileage', entries.map(m => m.id !== id ? m : Object.assign({}, m, {
+    date:      document.getElementById('mm-date').value,
+    from:      document.getElementById('mm-from').value,
+    to:        document.getElementById('mm-to').value,
+    purpose:   document.getElementById('mm-purpose').value,
+    miles,
+    deduction: parseFloat((miles * rate).toFixed(2)),
+    notes:     document.getElementById('mm-notes').value,
+  })));
+  closeEditModal();
   renderMileage();
 }
 
