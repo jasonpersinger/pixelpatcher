@@ -1800,12 +1800,55 @@ function addJob() {
   renderJobs();
 }
 
+function sendJobReadyEmail(job) {
+  const user = fsauth.currentUser;
+  if (!user) return;
+
+  // Look up customer email
+  const customers  = DB.get('pp_customers') || [];
+  const customer   = job.customerId
+    ? customers.find(c => c.id === job.customerId)
+    : customers.find(c => (c.firstName + ' ' + c.lastName).trim() === job.customer.trim());
+  const email = customer && customer.email ? customer.email.trim() : '';
+
+  if (!email) {
+    // No email on file — show a brief notice
+    const notice = document.createElement('div');
+    notice.style.cssText = 'position:fixed;bottom:24px;right:24px;background:var(--card);border:1px solid var(--border);'
+      + 'border-radius:var(--radius);padding:12px 18px;font-family:var(--font);font-size:12px;'
+      + 'color:var(--muted);z-index:999;max-width:300px';
+    notice.textContent = 'Job marked complete \u2014 no email on file for ' + job.customer + '.';
+    document.body.appendChild(notice);
+    setTimeout(() => notice.remove(), 5000);
+    return;
+  }
+
+  const settings = getSettings();
+  const total    = (Number(job.labor) + Number(job.parts) + Number(job.tax || 0)).toFixed(2);
+
+  fsdb.collection('mail').add({
+    to: email,
+    message: {
+      subject: 'Your device is ready \u2014 ' + (settings.businessName || 'Pixel Patcher'),
+      text: 'Hi ' + job.customer + ',\n\n'
+        + 'Great news \u2014 your device is ready for pickup!\n\n'
+        + 'Job: ' + job.issue + '\n'
+        + (job.service ? 'Service: ' + job.service + '\n' : '')
+        + 'Total: $' + total + '\n\n'
+        + 'Payment accepted: Cash \u00b7 Venmo \u00b7 CashApp \u00b7 Square\n\n'
+        + 'Questions? Text or call ' + (settings.phone || '540-300-2577') + '.\n\n'
+        + 'Thanks for choosing ' + (settings.businessName || 'Pixel Patcher') + '!',
+    },
+  }).catch(err => console.warn('Failed to send job ready email:', err));
+}
+
 function markPaid(id) {
   const jobs = DB.get('pp_jobs') || [];
   const job  = jobs.find(j => j.id === id);
   if (!job) return;
   job.paid = true; job.status = 'Complete';
   DB.set('pp_jobs', jobs);
+  sendJobReadyEmail(job);
   DB.push('pp_income', {
     id: uid(), date: today(), type: 'Service', category: 'Repair',
     description: 'Job: ' + job.issue + ' \u2014 ' + job.customer,
