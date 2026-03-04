@@ -1883,16 +1883,20 @@ function renderInvoice() {
     <div id="printable" style="background:#fff;color:#111;max-width:680px;padding:48px;
          border-radius:var(--radius);font-family:'Segoe UI',sans-serif">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:40px">
-        <div>
-          <div style="font-size:22px;font-weight:800;letter-spacing:1px">
-            &#9632; ${esc(s.businessName.toUpperCase())}
-          </div>
-          <div style="font-size:11px;color:#666;margin-top:4px;letter-spacing:2px">
-            FROM PIXELS TO PROCESSORS
-          </div>
-          <div style="margin-top:12px;font-size:13px;color:#555;line-height:1.8">
-            ${esc(s.phone)}<br>${esc(s.website)}
-            ${s.address ? '<br>' + esc(s.address) : ''}
+        <div style="display:flex;align-items:flex-start;gap:16px">
+          <img src="/pixelpatcherLOGO.png" alt="Pixel Patcher"
+               style="height:56px;width:auto;object-fit:contain">
+          <div>
+            <div style="font-size:22px;font-weight:800;letter-spacing:1px">
+              ${esc(s.businessName.toUpperCase())}
+            </div>
+            <div style="font-size:11px;color:#666;margin-top:4px;letter-spacing:2px">
+              FROM PIXELS TO PROCESSORS
+            </div>
+            <div style="margin-top:12px;font-size:13px;color:#555;line-height:1.8">
+              ${esc(s.phone)}<br>${esc(s.website)}
+              ${s.address ? '<br>' + esc(s.address) : ''}
+            </div>
           </div>
         </div>
         <div style="text-align:right">
