@@ -2063,7 +2063,7 @@ function renderDashboard() {
            &#9733; ${pendingInquiries.length} new website inquir${pendingInquiries.length > 1 ? 'ies' : 'y'} waiting
          </span>
          <button class="btn btn-ghost" style="font-size:11px;padding:4px 12px"
-           onclick="showSection('jobs')">View Jobs &rarr;</button>
+           onclick="document.querySelector('[data-section=\'jobs\']').click()">View Jobs &rarr;</button>
        </div>`
     : '';
 
