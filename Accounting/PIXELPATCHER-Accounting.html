@@ -899,7 +899,10 @@ function renderIncome() {
           + '<td>' + esc(i.paymentMethod) + '</td>'
           + '<td style="color:var(--muted)">' + esc(i.notes) + '</td>'
           + '<td>' + dot + '</td>'
-          + '<td><button class="btn btn-danger" onclick="deleteIncome(\'' + esc(i.id) + '\')">&#x2715;</button></td>'
+          + '<td style="display:flex;gap:6px;align-items:center">'
+          + '<button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="editIncome(\'' + esc(i.id) + '\')">&#x270E;</button>'
+          + '<button class="btn btn-danger" onclick="deleteIncome(\'' + esc(i.id) + '\')">&#x2715;</button>'
+          + '</td>'
           + '</tr>';
       }).join('');
 
@@ -947,6 +950,47 @@ function addIncome() {
 function deleteIncome(id) {
   if (!confirm('Delete this income entry?')) return;
   DB.del('pp_income', id);
+  renderIncome();
+}
+
+function editIncome(id) {
+  const income = DB.get('pp_income') || [];
+  const i = income.find(x => x.id === id);
+  if (!i) return;
+  document.getElementById('edit-modal-title').textContent = 'Edit Income';
+  document.getElementById('edit-modal-body').innerHTML = `
+    <div class="form-grid">
+      <div class="form-group"><label>Date</label>
+        <input type="date" id="im-date" value="${esc(i.date)}"></div>
+      <div class="form-group"><label>Type</label>
+        <select id="im-type">${optionsHTML(INCOME_TYPES, i.type)}</select></div>
+      <div class="form-group"><label>Description</label>
+        <input id="im-desc" value="${esc(i.description)}"></div>
+      <div class="form-group"><label>Amount ($)</label>
+        <input type="number" step="0.01" id="im-amt" value="${esc(String(i.amount))}"></div>
+      <div class="form-group"><label>Payment Method</label>
+        <select id="im-pay">${optionsHTML(PAY_METHODS, i.paymentMethod)}</select></div>
+      <div class="form-group"><label>Notes</label>
+        <input id="im-notes" value="${esc(i.notes || '')}"></div>
+    </div>
+  `;
+  document.getElementById('edit-modal-save').onclick = () => saveEditIncome(id);
+  document.getElementById('edit-modal').style.display = 'flex';
+}
+
+function saveEditIncome(id) {
+  const amt = parseFloat(document.getElementById('im-amt').value);
+  if (!amt || amt <= 0) { alert('Enter a valid amount.'); return; }
+  const income = DB.get('pp_income') || [];
+  DB.set('pp_income', income.map(i => i.id !== id ? i : Object.assign({}, i, {
+    date:          document.getElementById('im-date').value,
+    type:          document.getElementById('im-type').value,
+    description:   document.getElementById('im-desc').value,
+    amount:        amt,
+    paymentMethod: document.getElementById('im-pay').value,
+    notes:         document.getElementById('im-notes').value,
+  })));
+  closeEditModal();
   renderIncome();
 }
 
