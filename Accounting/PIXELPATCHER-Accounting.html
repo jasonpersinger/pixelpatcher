@@ -356,6 +356,10 @@ function closeReceiptModal() {
   _receiptExpenseId = null;
 }
 
+function closeEditModal() {
+  document.getElementById('edit-modal').style.display = 'none';
+}
+
 function handleReceiptFile(event) {
   const file = event.target.files[0];
   if (!file || !_receiptExpenseId) return;
