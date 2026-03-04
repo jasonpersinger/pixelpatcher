@@ -885,11 +885,8 @@ function renderIncome() {
                         .reduce((s, i) => s + Number(i.amount), 0);
   const totalIn = income.reduce((s, i) => s + Number(i.amount), 0);
   const rows = income.length === 0
-    ? '<tr><td colspan="8" style="color:var(--muted);text-align:center;padding:24px">No income yet</td></tr>'
+    ? '<tr><td colspan="7" style="color:var(--muted);text-align:center;padding:24px">No income yet</td></tr>'
     : income.slice().sort((a, b) => b.date.localeCompare(a.date)).map(i => {
-        const dot = i.receiptUrl
-          ? '<button class="btn" title="View receipt" onclick="viewReceipt(\'' + esc(i.receiptUrl) + '\')" style="background:var(--positive);color:#000;border:none;border-radius:12px;padding:4px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font);white-space:nowrap">&#x2713; Receipt</button>'
-          : '<button class="btn" title="Attach receipt" onclick="openReceiptModal(\'' + esc(i.id) + '\',\'pp_income\',renderIncome)" style="background:var(--warning);color:#fff;border:none;border-radius:12px;padding:4px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font);white-space:nowrap">+ Receipt</button>';
         const badge = i.type === 'Owner Contribution' ? 'badge-awaiting' : 'badge-complete';
         return '<tr>'
           + '<td>' + esc(i.date) + '</td>'
@@ -898,7 +895,6 @@ function renderIncome() {
           + '<td style="color:var(--positive)">' + fmt(i.amount) + '</td>'
           + '<td>' + esc(i.paymentMethod) + '</td>'
           + '<td style="color:var(--muted)">' + esc(i.notes) + '</td>'
-          + '<td>' + dot + '</td>'
           + '<td style="display:flex;gap:6px;align-items:center">'
           + '<button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="editIncome(\'' + esc(i.id) + '\')">&#x270E;</button>'
           + '<button class="btn btn-danger" onclick="deleteIncome(\'' + esc(i.id) + '\')">&#x2715;</button>'
@@ -927,7 +923,7 @@ function renderIncome() {
     + '<div class="total-item"><label>Total In (incl. contributions)</label><span style="color:var(--accent)">' + fmt(totalIn) + '</span></div>'
     + '</div>'
     + '<div class="table-wrap"><table>'
-    + '<thead><tr><th>Date</th><th>Type</th><th>Description</th><th>Amount</th><th>Method</th><th>Notes</th><th>Receipt</th><th></th></tr></thead>'
+    + '<thead><tr><th>Date</th><th>Type</th><th>Description</th><th>Amount</th><th>Method</th><th>Notes</th><th></th></tr></thead>'
     + '<tbody>' + rows + '</tbody>'
     + '</table></div>';
 }
@@ -1074,6 +1070,13 @@ function buildCustomerFormDOM(prefill, saveId) {
   return frag;
 }
 
+function deleteCustomer(id) {
+  if (!confirm('Delete this customer record? Their job history will be kept.')) return;
+  const custs = DB.get('pp_customers') || [];
+  DB.set('pp_customers', custs.filter(c => c.id !== id));
+  renderCustomerList();
+}
+
 function renderCustomerList() {
   const jobs   = DB.get('pp_jobs') || [];
   const stored = DB.get('pp_customers') || [];
@@ -1176,12 +1179,20 @@ function renderCustomerList() {
         tr.appendChild(td);
       });
       const tdBtn = document.createElement('td');
+      tdBtn.style.cssText = 'display:flex;gap:6px;align-items:center';
       const vBtn  = document.createElement('button');
       vBtn.className = 'btn btn-ghost';
       vBtn.style.cssText = 'font-size:11px;padding:4px 10px';
       vBtn.textContent = 'View →';
       vBtn.addEventListener('click', () => showCustomer(c.fullName));
       tdBtn.appendChild(vBtn);
+      if (c.id) {
+        const dBtn = document.createElement('button');
+        dBtn.className = 'btn btn-danger';
+        dBtn.textContent = '\u2715';
+        dBtn.addEventListener('click', () => deleteCustomer(c.id));
+        tdBtn.appendChild(dBtn);
+      }
       tr.appendChild(tdBtn);
       tbody.appendChild(tr);
     });
