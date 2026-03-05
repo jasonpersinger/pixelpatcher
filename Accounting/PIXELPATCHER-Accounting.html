@@ -324,8 +324,16 @@ async function loadFromFirestore(uid) {
 }
 
 // ── Auth state handler ────────────────────────────────────────────────────────
+const ALLOWED_EMAILS = ['jason.persinger@gmail.com'];
+
 fsauth.onAuthStateChanged(async user => {
   if (user) {
+    if (!ALLOWED_EMAILS.includes(user.email)) {
+      fsauth.signOut();
+      showSignInOverlay();
+      alert('Access denied: ' + user.email + ' is not authorized.');
+      return;
+    }
     hideSignInOverlay();
     await loadFromFirestore(user.uid);
     seedData();
