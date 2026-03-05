@@ -2299,6 +2299,43 @@ function renderDashboard() {
   const curMon = new Date().getMonth();
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
+  // ── Right Now computations ────────────────────────────────────────────────
+  const curYear     = new Date().getFullYear();
+  const prevMonIdx  = curMon === 0 ? 11 : curMon - 1;
+  const prevMonYear = curMon === 0 ? curYear - 1 : curYear;
+
+  const outstanding    = jobs.filter(j => !j.paid && j.status !== 'Closed')
+                             .reduce((s, j) => s + Number(j.labor) + Number(j.parts) + Number(j.tax || 0), 0);
+  const unpaidCount    = jobs.filter(j => !j.paid && j.status !== 'Closed').length;
+  const outstandingSub = unpaidCount > 0
+    ? unpaidCount + ' unpaid job' + (unpaidCount > 1 ? 's' : '')
+    : 'All clear';
+
+  const pipeJobs    = jobs.filter(j => ['Pending','In Progress','Awaiting Parts'].includes(j.status));
+  const pipeCount   = pipeJobs.length;
+  const pipePending = pipeJobs.filter(j => j.status === 'Pending').length;
+  const pipeInProg  = pipeJobs.filter(j => j.status === 'In Progress').length;
+  const pipeAwaiting= pipeJobs.filter(j => j.status === 'Awaiting Parts').length;
+  const pipeSub     = pipeCount > 0
+    ? [pipePending  > 0 ? pipePending  + ' pending'        : '',
+       pipeInProg   > 0 ? pipeInProg   + ' in progress'    : '',
+       pipeAwaiting > 0 ? pipeAwaiting + ' awaiting parts' : '']
+       .filter(Boolean).join(' \xB7 ')
+    : 'No active jobs';
+
+  const curMonRev  = income.filter(i => i.type !== 'Owner Contribution').filter(i => {
+    const d = new Date(i.date); return d.getFullYear() === curYear && d.getMonth() === curMon;
+  }).reduce((s, i) => s + Number(i.amount), 0);
+  const prevMonRev = income.filter(i => i.type !== 'Owner Contribution').filter(i => {
+    const d = new Date(i.date); return d.getFullYear() === prevMonYear && d.getMonth() === prevMonIdx;
+  }).reduce((s, i) => s + Number(i.amount), 0);
+  const momPct     = prevMonRev > 0
+    ? Math.round(((curMonRev - prevMonRev) / prevMonRev) * 100)
+    : null;
+  const momSub     = momPct === null ? 'No data last month'
+    : (momPct >= 0 ? '\u2191' : '\u2193') + ' ' + Math.abs(momPct) + '% vs ' + months[prevMonIdx];
+  const momCls     = momPct === null ? '' : momPct >= 0 ? 'kpi-positive' : 'kpi-negative';
+
   const kpi = (label, value, cls, sub) => `
     <div class="kpi-card">
       <div class="kpi-label">${label}</div>
