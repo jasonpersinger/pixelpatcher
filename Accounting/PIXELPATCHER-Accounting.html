@@ -2289,11 +2289,11 @@ function renderDashboard() {
   const mExp = Array(12).fill(0);
   income.filter(i => i.type !== 'Owner Contribution').forEach(i => {
     const d = new Date(i.date);
-    if (d.getFullYear() === 2026) mInc[d.getMonth()] += Number(i.amount);
+    if (d.getFullYear() === new Date().getFullYear()) mInc[d.getMonth()] += Number(i.amount);
   });
   expenses.forEach(e => {
     const d = new Date(e.date);
-    if (d.getFullYear() === 2026) mExp[d.getMonth()] += Number(e.amount);
+    if (d.getFullYear() === new Date().getFullYear()) mExp[d.getMonth()] += Number(e.amount);
   });
   const maxVal = Math.max(...mInc, ...mExp, 1);
   const curMon = new Date().getMonth();
@@ -2357,7 +2357,16 @@ function renderDashboard() {
 
   document.getElementById('dashboard').innerHTML = `
     ${inquiryBanner}
-    <div class="page-title">Dashboard &mdash; 2026</div>
+    <div class="page-title">Dashboard &mdash; ${curYear}</div>
+    <div style="margin-bottom:8px">
+      <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;
+                  letter-spacing:1px;margin-bottom:12px">Right Now</div>
+      <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
+        ${kpi('Outstanding Balance', fmt(outstanding), outstanding > 0 ? 'kpi-accent' : 'kpi-positive', outstandingSub)}
+        ${kpi('Active Pipeline', pipeCount, pipeCount > 0 ? 'kpi-accent' : '', pipeSub)}
+        ${kpi('This Month', fmt(curMonRev), momCls || (curMonRev > 0 ? 'kpi-positive' : ''), momSub)}
+      </div>
+    </div>
     <div style="margin-bottom:8px">
       <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;
                   letter-spacing:1px;margin-bottom:12px">P&amp;L &mdash; Year to Date</div>
@@ -2388,7 +2397,7 @@ function renderDashboard() {
     <div class="card">
       <div style="font-size:12px;font-weight:600;color:var(--muted);
                   text-transform:uppercase;letter-spacing:1px;margin-bottom:16px">
-        Monthly Breakdown &mdash; 2026
+        Monthly Breakdown &mdash; ${curYear}
       </div>
       <div class="chart-bar-wrap">
         ${months.map((m, i) => {
