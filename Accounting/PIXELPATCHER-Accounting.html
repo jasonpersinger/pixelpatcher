@@ -2336,6 +2336,15 @@ function renderDashboard() {
     : (momPct >= 0 ? '\u2191' : '\u2193') + ' ' + Math.abs(momPct) + '% vs ' + months[prevMonIdx];
   const momCls     = momPct === null ? '' : momPct >= 0 ? 'kpi-positive' : 'kpi-negative';
 
+  const todayStr     = today();
+  const followups    = DB.get('pp_followups') || [];
+  const fuDue        = followups.filter(f => !f.done && f.dueDate <= todayStr);
+  const fuOverdue    = fuDue.filter(f => f.dueDate < todayStr).length;
+  const fuDueCount   = fuDue.length;
+  const fuCls        = fuDueCount > 0 ? 'kpi-negative' : 'kpi-positive';
+  const fuSub        = fuDueCount === 0 ? 'All clear'
+    : fuOverdue > 0 ? fuOverdue + ' overdue' : 'Due today';
+
   const kpi = (label, value, cls, sub) => `
     <div class="kpi-card">
       <div class="kpi-label">${label}</div>
@@ -2361,10 +2370,11 @@ function renderDashboard() {
     <div style="margin-bottom:8px">
       <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;
                   letter-spacing:1px;margin-bottom:12px">Right Now</div>
-      <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
+      <div class="kpi-grid" style="grid-template-columns:repeat(2,1fr)">
         ${kpi('Outstanding Balance', fmt(outstanding), outstanding > 0 ? 'kpi-accent' : 'kpi-positive', outstandingSub)}
         ${kpi('Active Pipeline', pipeCount, pipeCount > 0 ? 'kpi-accent' : '', pipeSub)}
         ${kpi('This Month', fmt(curMonRev), momCls || (curMonRev > 0 ? 'kpi-positive' : ''), momSub)}
+        ${kpi('Follow-ups Due', fuDueCount, fuCls, fuSub)}
       </div>
     </div>
     <div style="margin-bottom:8px">
