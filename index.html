@@ -812,7 +812,11 @@
   }
 
   window.addEventListener('load', initBorders);
-  window.addEventListener('resize', initBorders);
+  let _resizeTimer;
+  window.addEventListener('resize', function () {
+    clearTimeout(_resizeTimer);
+    _resizeTimer = setTimeout(initBorders, 100);
+  });
 
   // Netlify Forms — AJAX submission to avoid redirect 404
   const contactForm = document.getElementById('contact-form');
