@@ -187,6 +187,22 @@
   </div>
 </div>
 
+<div id="pay-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85);
+     z-index:999; align-items:center; justify-content:center; flex-direction:column;">
+  <div style="background:var(--card); border:1px solid var(--border); border-radius:var(--radius);
+              padding:32px; width:320px;">
+    <div style="font-weight:700; font-family:var(--font); margin-bottom:16px; color:var(--text);">Payment Method</div>
+    <div class="form-group" style="margin-bottom:20px;">
+      <label>How was this paid?</label>
+      <select id="pay-modal-method" style="background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:var(--radius);padding:9px 12px;font-size:14px;font-family:var(--font);width:100%"></select>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-primary" onclick="confirmMarkPaid()">Confirm Paid</button>
+      <button class="btn btn-ghost" onclick="closePayModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <div id="signin-overlay" style="display:flex; position:fixed; inset:0; background:#000;
      z-index:1000; align-items:center; justify-content:center; flex-direction:column;">
   <div style="font-family:var(--font-pixel); font-size:9px; color:var(--accent);
@@ -343,6 +359,27 @@ fsauth.onAuthStateChanged(async user => {
     showSignInOverlay();
   }
 });
+
+// ── Pay modal ─────────────────────────────────────────────────────────────────
+let _payJobId = null;
+
+function openPayModal(id) {
+  _payJobId = id;
+  const sel = document.getElementById('pay-modal-method');
+  sel.innerHTML = PAY_METHODS.map(m => `<option value="${esc(m)}">${esc(m)}</option>`).join('');
+  document.getElementById('pay-modal').style.display = 'flex';
+}
+
+function closePayModal() {
+  document.getElementById('pay-modal').style.display = 'none';
+  _payJobId = null;
+}
+
+function confirmMarkPaid() {
+  const method = document.getElementById('pay-modal-method').value;
+  closePayModal();
+  markPaid(_payJobId, method);
+}
 
 // ── Receipt upload ────────────────────────────────────────────────────────────
 let _receiptExpenseId = null;
@@ -1887,7 +1924,7 @@ function renderJobs() {
                 <td>${j.paid
                   ? '<span style="color:var(--positive)">&#x2713; Paid</span>'
                   : `<button class="btn btn-success" style="font-size:11px;padding:4px 10px"
-                       onclick="markPaid('${esc(j.id)}')">Mark Paid</button>`}</td>
+                       onclick="openPayModal('${esc(j.id)}')">Mark Paid</button>`}</td>
                 <td style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
                   <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px"
                     onclick="openInvoice('${esc(j.id)}')">Invoice</button>
