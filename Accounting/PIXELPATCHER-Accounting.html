@@ -2532,36 +2532,18 @@ function sendInvoiceEmail() {
     to: email,
     message: {
       subject: 'Invoice ' + invNum + ' from ' + (s.businessName || 'Pixel Patcher'),
-      text: 'Hi ' + job.customer + ',
-
-'
-        + 'Please find your invoice below.
-
-'
-        + 'Invoice #: ' + invNum + '
-'
-        + 'Date: ' + today() + '
-
-'
-        + (job.service ? 'Service: ' + job.service + '
-' : '')
-        + (job.issue   ? 'Issue: '   + job.issue   + '
-' : '')
-        + (Number(job.labor) > 0 ? 'Labor: $' + Number(job.labor).toFixed(2) + '
-' : '')
-        + (Number(job.parts) > 0 ? 'Parts: $' + Number(job.parts).toFixed(2) + '
-' : '')
-        + (tax > 0              ? 'Tax: $'   + tax.toFixed(2)               + '
-' : '')
-        + '
-TOTAL DUE: $' + total + '
-
-'
-        + 'Payment accepted: Cash · Venmo · CashApp · Square
-'
-        + 'Questions? Text or call ' + (s.phone || '') + '
-
-'
+      text: 'Hi ' + job.customer + ',\n\n'
+        + 'Please find your invoice below.\n\n'
+        + 'Invoice #: ' + invNum + '\n'
+        + 'Date: ' + today() + '\n\n'
+        + (job.service ? 'Service: ' + job.service + '\n' : '')
+        + (job.issue   ? 'Issue: '   + job.issue   + '\n' : '')
+        + (Number(job.labor) > 0 ? 'Labor: $' + Number(job.labor).toFixed(2) + '\n' : '')
+        + (Number(job.parts) > 0 ? 'Parts: $' + Number(job.parts).toFixed(2) + '\n' : '')
+        + (tax > 0              ? 'Tax: $'   + tax.toFixed(2)               + '\n' : '')
+        + '\nTOTAL DUE: $' + total + '\n\n'
+        + 'Payment accepted: Cash \u00b7 Venmo \u00b7 CashApp \u00b7 Square\n'
+        + 'Questions? Text or call ' + (s.phone || '') + '\n\n'
         + 'Thank you for choosing ' + (s.businessName || 'Pixel Patcher') + '!',
     },
   }).then(() => {
