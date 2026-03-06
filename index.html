@@ -741,6 +741,10 @@
             <p style="font-family:var(--font-pixel);font-size:9px;color:var(--gold);line-height:2;letter-spacing:1px;">MESSAGE SENT!</p>
             <p style="font-family:var(--font-body);color:var(--gray);margin-top:0.75rem;">Thanks! I'll be in touch soon.</p>
           </div>
+          <div id="contact-error" style="display:none;">
+            <p style="font-family:var(--font-pixel);font-size:9px;color:#e05555;line-height:2;letter-spacing:1px;">SEND FAILED</p>
+            <p style="font-family:var(--font-body);color:var(--gray);margin-top:0.75rem;">Something went wrong. Please call or text <a href="tel:5403002577" style="color:var(--gold);">540-300-2577</a> directly.</p>
+          </div>
         </div>
 
       </div>
@@ -823,16 +827,21 @@
   const contactForm = document.getElementById('contact-form');
   const contactSuccess = document.getElementById('contact-success');
   if (contactForm && contactSuccess) {
+    const contactError = document.getElementById('contact-error');
     contactForm.addEventListener('submit', async function(e) {
       e.preventDefault();
-      const data = new URLSearchParams(new FormData(contactForm)).toString();
-      await fetch('/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: data
-      });
-      contactForm.style.display = 'none';
-      contactSuccess.style.display = 'block';
+      try {
+        const res = await fetch('/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams(new FormData(contactForm)).toString()
+        });
+        if (!res.ok) throw new Error('non-200');
+        contactForm.style.display = 'none';
+        contactSuccess.style.display = 'block';
+      } catch (_) {
+        if (contactError) contactError.style.display = 'block';
+      }
     });
   }
 </script>
