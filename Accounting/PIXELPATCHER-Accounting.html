@@ -385,11 +385,13 @@ function confirmMarkPaid() {
 let _receiptExpenseId = null;
 let _receiptKey       = 'pp_expenses';
 let _receiptRenderFn  = null;
+let _receiptField     = 'receiptUrl';
 
-function openReceiptModal(id, key, renderFn) {
+function openReceiptModal(id, key, renderFn, field) {
   _receiptExpenseId = id;
   _receiptKey       = key      || 'pp_expenses';
   _receiptRenderFn  = renderFn || renderExpenses;
+  _receiptField     = field    || 'receiptUrl';
   document.getElementById('receipt-progress').textContent = '';
   document.getElementById('receipt-file-input').value   = '';
   document.getElementById('receipt-camera-input').value = '';
@@ -421,7 +423,7 @@ function handleReceiptFile(event) {
   ref.put(file).then(snapshot => snapshot.ref.getDownloadURL()).then(url => {
     const items = DB.get(_receiptKey) || [];
     DB.set(_receiptKey, items.map(e =>
-      e.id === _receiptExpenseId ? Object.assign({}, e, { receiptUrl: url }) : e
+      e.id === _receiptExpenseId ? Object.assign({}, e, { [_receiptField]: url }) : e
     ));
     closeReceiptModal();
     _receiptRenderFn();
@@ -489,9 +491,10 @@ const DB = {
   del:  (key, id)  => DB.set(key, (DB.get(key) || []).filter(x => x.id !== id)),
 };
 
-const uid   = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-const today = () => new Date().toISOString().slice(0, 10);
-const fmt   = n => '$' + Number(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+const uid       = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const today     = () => new Date().toISOString().slice(0, 10);
+const fmt       = n => '$' + Number(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+const daysSince = d => Math.floor((Date.now() - new Date(d).getTime()) / 86400000);
 
 // ── Constants ────────────────────────────────────────────────────────────────
 const EXPENSE_CATS = ['Tools & Equipment','Marketing','Licenses & Permits',
@@ -499,6 +502,9 @@ const EXPENSE_CATS = ['Tools & Equipment','Marketing','Licenses & Permits',
 const PAY_METHODS  = ['Cash','Venmo','CashApp','Square','Check','Card','Transfer'];
 const INCOME_TYPES = ['Service','Owner Contribution','Other'];
 const JOB_STATUSES = ['Pending','In Progress','Complete','Awaiting Parts','Closed','Warranty Claim'];
+
+// ── Job filter state ──────────────────────────────────────────────────────────
+let _jobFilter = 'All';
 
 function optionsHTML(arr, selected = '') {
   return arr.map(v =>
@@ -777,7 +783,24 @@ function renderExpenses() {
   const total = expenses.reduce((s, e) => s + Number(e.amount), 0);
   const jobMap = {};
   (DB.get('pp_jobs') || []).forEach(j => { jobMap[j.id] = j; });
-  document.getElementById('expenses').innerHTML = `
+
+  // Recurring banner: find recurring expenses not yet logged this calendar month
+  const nowYM    = today().slice(0, 7); // 'YYYY-MM'
+  const recurring = expenses.filter(e => e.recurring);
+  const missing   = recurring.filter(r =>
+    !expenses.some(e => e.id !== r.id && e.description === r.description && e.date && e.date.slice(0, 7) === nowYM)
+  );
+  const recurBanner = missing.length > 0
+    ? `<div style="background:rgba(201,160,0,0.12);border:1px solid var(--accent);border-radius:var(--radius);
+                   padding:12px 20px;margin-bottom:16px;font-family:var(--font);font-size:13px">
+         <span style="color:var(--accent);font-weight:700">&#9888; ${missing.length} recurring expense${missing.length > 1 ? 's' : ''} not yet logged this month:</span>
+         <span style="color:var(--muted)"> ${missing.map(r => esc(r.description)).join(', ')}</span>
+         <button class="btn btn-ghost" style="margin-left:16px;font-size:11px;padding:4px 12px"
+           onclick="toggleForm('expense-form')">Add Now &darr;</button>
+       </div>`
+    : '';
+
+  document.getElementById('expenses').innerHTML = recurBanner + `
     <div class="section-header">
       <div class="page-title">Expenses</div>
       <button class="btn btn-primary" onclick="toggleForm('expense-form')">+ Add Expense</button>
@@ -798,6 +821,10 @@ function renderExpenses() {
           <select id="e-pay">${optionsHTML(PAY_METHODS)}</select></div>
         <div class="form-group"><label>Notes</label>
           <input id="e-notes" placeholder="Optional"></div>
+        <div class="form-group" style="justify-content:flex-end;flex-direction:row;align-items:center;gap:8px">
+          <input type="checkbox" id="e-recurring" style="width:16px;height:16px;cursor:pointer">
+          <label for="e-recurring" style="cursor:pointer;font-size:13px;color:var(--text)">Recurring monthly</label>
+        </div>
         <div class="form-group"><label>Link to Job <span style="color:var(--muted);font-weight:400">(optional)</span></label>
           <select id="e-job">
             <option value="">— No Job —</option>
@@ -863,7 +890,8 @@ function addExpense() {
     vendor: document.getElementById('e-vendor').value,
     amount: amt, paymentMethod: document.getElementById('e-pay').value,
     notes: document.getElementById('e-notes').value,
-    jobId: document.getElementById('e-job').value || null,
+    jobId:     document.getElementById('e-job').value || null,
+    recurring: document.getElementById('e-recurring').checked,
   });
   renderExpenses();
 }
@@ -898,6 +926,10 @@ function editExpense(id) {
         <select id="em-pay">${optionsHTML(PAY_METHODS, e.paymentMethod)}</select></div>
       <div class="form-group"><label>Notes</label>
         <input id="em-notes" value="${esc(e.notes || '')}"></div>
+      <div class="form-group" style="justify-content:flex-start;flex-direction:row;align-items:center;gap:8px">
+        <input type="checkbox" id="em-recurring"${e.recurring ? ' checked' : ''} style="width:16px;height:16px;cursor:pointer">
+        <label for="em-recurring" style="cursor:pointer;font-size:13px;color:var(--text)">Recurring monthly</label>
+      </div>
       <div class="form-group"><label>Link to Job <span style="color:var(--muted);font-weight:400">(optional)</span></label>
         <select id="em-job"><option value="">— No Job —</option>${jobOptions}</select></div>
     </div>
@@ -919,6 +951,7 @@ function saveEditExpense(id) {
     paymentMethod: document.getElementById('em-pay').value,
     notes:         document.getElementById('em-notes').value,
     jobId:         document.getElementById('em-job').value || null,
+    recurring:     document.getElementById('em-recurring').checked,
   })));
   closeEditModal();
   renderExpenses();
@@ -1037,7 +1070,8 @@ function saveEditIncome(id) {
 }
 
 // ── Customers section ────────────────────────────────────────────────────────
-let _customerView = null;
+let _customerView   = null;
+let _customerSearch = '';
 
 function showCustomer(name) {
   _customerView = name;
@@ -1146,6 +1180,15 @@ function renderCustomerList() {
     return Object.assign({}, c, { fullName, jobs: cjobs.length, totalSpent, lastVisit: cjobs[0] ? cjobs[0].date : '' });
   }).sort((a, b) => b.lastVisit.localeCompare(a.lastVisit));
 
+  const searchQ = _customerSearch.trim().toLowerCase();
+  const displayCustomers = searchQ
+    ? allCustomers.filter(c =>
+        c.fullName.toLowerCase().includes(searchQ) ||
+        (c.phone || '').includes(searchQ) ||
+        (c.email || '').toLowerCase().includes(searchQ)
+      )
+    : allCustomers;
+
   const totalRevenue = jobs.filter(j => j.paid).reduce((s, j) => s + Number(j.labor) + Number(j.parts), 0);
 
   const section = document.getElementById('customers');
@@ -1186,6 +1229,17 @@ function renderCustomerList() {
   totals.appendChild(t1); totals.appendChild(t2);
   section.appendChild(totals);
 
+  // Search
+  const searchWrap = document.createElement('div');
+  searchWrap.style.cssText = 'margin-bottom:16px';
+  const searchInput = document.createElement('input');
+  searchInput.placeholder = 'Search by name, phone, or email…';
+  searchInput.value = _customerSearch;
+  searchInput.style.cssText = 'background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:var(--radius);padding:9px 12px;font-size:14px;font-family:var(--font);width:100%;max-width:360px;outline:none';
+  searchInput.addEventListener('input', e => { _customerSearch = e.target.value; renderCustomerList(); });
+  searchWrap.appendChild(searchInput);
+  section.appendChild(searchWrap);
+
   // Table
   const wrap = document.createElement('div');
   wrap.className = 'table-wrap';
@@ -1199,14 +1253,14 @@ function renderCustomerList() {
   table.appendChild(thead);
 
   const tbody = document.createElement('tbody');
-  if (allCustomers.length === 0) {
+  if (displayCustomers.length === 0) {
     const tr = document.createElement('tr');
     const td = document.createElement('td');
     td.colSpan = 7; td.style.cssText = 'color:var(--muted);text-align:center;padding:24px';
     td.textContent = 'No customers yet';
     tr.appendChild(td); tbody.appendChild(tr);
   } else {
-    allCustomers.forEach(c => {
+    displayCustomers.forEach(c => {
       const tr = document.createElement('tr');
       const cells = [
         { text: c.fullName, bold: true },
@@ -1831,6 +1885,51 @@ function saveEditMileage(id) {
   renderMileage();
 }
 
+// ── Parts list helpers ────────────────────────────────────────────────────────
+function addPartRow(listId, totalId) {
+  const list = document.getElementById(listId);
+  if (!list) return;
+  const row = document.createElement('div');
+  row.style.cssText = 'display:flex;gap:6px;align-items:center';
+  const nameInput = document.createElement('input');
+  nameInput.placeholder = 'Part name';
+  nameInput.style.cssText = 'flex:1;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:var(--radius);padding:7px 10px;font-size:13px;font-family:var(--font)';
+  const costInput = document.createElement('input');
+  costInput.type = 'number'; costInput.step = '0.01'; costInput.placeholder = '0.00';
+  costInput.style.cssText = 'width:90px;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:var(--radius);padding:7px 10px;font-size:13px;font-family:var(--font)';
+  costInput.addEventListener('input', () => updatePartsTotal(listId, totalId));
+  const removeBtn = document.createElement('button');
+  removeBtn.type = 'button'; removeBtn.textContent = '✕';
+  removeBtn.style.cssText = 'background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:0 4px';
+  removeBtn.addEventListener('click', () => { row.remove(); updatePartsTotal(listId, totalId); });
+  row.appendChild(nameInput); row.appendChild(costInput); row.appendChild(removeBtn);
+  list.appendChild(row);
+  nameInput.focus();
+}
+
+function updatePartsTotal(listId, totalId) {
+  const list  = document.getElementById(listId);
+  const total = document.getElementById(totalId);
+  if (!list || !total) return;
+  const sum = Array.from(list.querySelectorAll('input[type=number]'))
+    .reduce((s, inp) => s + (parseFloat(inp.value) || 0), 0);
+  total.textContent = sum > 0 ? 'Parts total: ' + fmt(sum) : '';
+}
+
+function getPartsList(listId) {
+  const list = document.getElementById(listId);
+  if (!list) return [];
+  const rows = list.querySelectorAll('div');
+  const parts = [];
+  rows.forEach(row => {
+    const inputs = row.querySelectorAll('input');
+    const name = inputs[0] ? inputs[0].value.trim() : '';
+    const cost = inputs[1] ? parseFloat(inputs[1].value) || 0 : 0;
+    if (name || cost > 0) parts.push({ name, cost });
+  });
+  return parts;
+}
+
 // ── Jobs section ─────────────────────────────────────────────────────────────
 function statusBadge(status) {
   const cls = {
@@ -1885,8 +1984,15 @@ function renderJobs() {
           <input id="j-service" placeholder="What did you do?"></div>
         <div class="form-group"><label>Labor ($)</label>
           <input type="number" step="0.01" id="j-labor" placeholder="0.00"></div>
-        <div class="form-group"><label>Parts ($)</label>
-          <input type="number" step="0.01" id="j-parts" placeholder="0.00"></div>
+        <div class="form-group" style="grid-column:span 2">
+          <label>Parts / Materials</label>
+          <div id="j-parts-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:6px"></div>
+          <button type="button" onclick="addPartRow('j-parts-list','j-parts-total')"
+            style="background:var(--card);border:1px solid var(--border);color:var(--muted);
+                   border-radius:var(--radius);padding:6px 14px;font-size:12px;cursor:pointer;
+                   font-family:var(--font)">+ Add Part</button>
+          <div id="j-parts-total" style="margin-top:6px;font-size:13px;color:var(--accent)"></div>
+        </div>
         <div class="form-group"><label>Status</label>
           <select id="j-status">${optionsHTML(JOB_STATUSES)}</select></div>
         <div class="form-group"><label>Device <span style="color:var(--muted);font-weight:400">(optional)</span></label>
@@ -1903,6 +2009,16 @@ function renderJobs() {
       <div class="total-item"><label>Completed</label>
         <span style="color:var(--positive)">${done}</span></div>
     </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px">
+      ${['All','Pending','In Progress','Awaiting Parts','Complete','Closed','Warranty Claim'].map(f =>
+        `<button onclick="_jobFilter='${f}';renderJobs()"
+           style="border:1px solid ${_jobFilter===f?'var(--accent)':'var(--border)'};
+                  background:${_jobFilter===f?'var(--accent)':'var(--card)'};
+                  color:${_jobFilter===f?'#000':'var(--muted)'};
+                  border-radius:20px;padding:4px 14px;font-size:12px;cursor:pointer;
+                  font-family:var(--font);font-weight:${_jobFilter===f?'700':'400'}">${f}</button>`
+      ).join('')}
+    </div>
     <div class="table-wrap"><table>
       <thead><tr>
         <th>#</th><th>Date</th><th>Customer</th><th>Device</th>
@@ -1911,8 +2027,10 @@ function renderJobs() {
       <tbody>
         ${jobs.length === 0
           ? '<tr><td colspan="9" style="color:var(--muted);text-align:center;padding:32px">No jobs yet &mdash; your first one is coming!</td></tr>'
-          : jobs.slice().reverse().map((j, i) => {
-              const num          = jobs.length - i;
+          : (() => {
+              const filtered = _jobFilter === 'All' ? jobs : jobs.filter(j => j.status === _jobFilter);
+              return filtered.slice().reverse().map((j, i) => {
+              const num          = filtered.length - i;
               const expCount     = linkedExpenseCount[j.id] || 0;
               const partsForCalc = expCount > 0 ? linkedExpenseSum[j.id] : Number(j.parts);
               const total        = Number(j.labor) + partsForCalc + Number(j.tax || 0);
@@ -1930,10 +2048,16 @@ function renderJobs() {
                 <td>${j.paid
                   ? '<span style="color:var(--positive)">&#x2713; Paid</span>'
                   : `<button class="btn btn-success" style="font-size:11px;padding:4px 10px"
-                       onclick="openPayModal('${esc(j.id)}')">Mark Paid</button>`}</td>
+                       onclick="openPayModal('${esc(j.id)}')">Mark Paid</button>
+                     <div style="font-size:10px;color:var(--muted);margin-top:2px">${daysSince(j.date)}d</div>`}</td>
                 <td style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
                   <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px"
                     onclick="openInvoice('${esc(j.id)}')">Invoice</button>
+                  ${j.photoUrl
+                    ? `<button class="btn" style="background:var(--positive);color:#000;border:none;border-radius:12px;padding:4px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font)"
+                         onclick="viewReceipt('${esc(j.photoUrl)}')">&#x1F4F7; Photo</button>`
+                    : `<button class="btn btn-ghost" style="font-size:11px;padding:4px 10px"
+                         onclick="openReceiptModal('${esc(j.id)}','pp_jobs',renderJobs,'photoUrl')">+ Photo</button>`}
                   <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px"
                     onclick="openFollowupModal('${esc(j.customer)}','${esc(j.phone)}')">Follow-up</button>
                   <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px"
@@ -1941,7 +2065,8 @@ function renderJobs() {
                   <button class="btn btn-danger" onclick="deleteJob('${esc(j.id)}')">&#x2715;</button>
                 </td>
               </tr>`;
-            }).join('')}
+            }).join('');
+            })()}
       </tbody>
     </table></div>
   `;
@@ -2020,8 +2145,11 @@ function addJob() {
     DB.push('pp_customers', Object.assign({ id: customerId, notes: '' }, contactData));
   }
 
-  const parts = parseFloat(document.getElementById('j-parts').value) || 0;
-  const tax   = parts * (getSettings().taxRate || 0);
+  const partsList = getPartsList('j-parts-list');
+  const parts     = partsList.length > 0
+    ? partsList.reduce((s, p) => s + p.cost, 0)
+    : 0;
+  const tax       = parts * (getSettings().taxRate || 0);
   DB.push('pp_jobs', {
     id: uid(), date: document.getElementById('j-date').value,
     customer: fullName,
@@ -2032,6 +2160,7 @@ function addJob() {
     service: document.getElementById('j-service').value,
     labor:   parseFloat(document.getElementById('j-labor').value) || 0,
     parts,
+    partsList: partsList.length > 0 ? partsList : undefined,
     tax,
     status:  document.getElementById('j-status').value,
     device:  document.getElementById('j-device').value.trim(),
@@ -2134,8 +2263,14 @@ function editJob(id) {
         <input id="jm-service" value="${esc(j.service || '')}"></div>
       <div class="form-group"><label>Labor ($)</label>
         <input type="number" step="0.01" id="jm-labor" value="${esc(String(j.labor || 0))}"></div>
-      <div class="form-group"><label>Parts ($)</label>
-        <input type="number" step="0.01" id="jm-parts" value="${esc(String(j.parts || 0))}"></div>
+      <div class="form-group" style="grid-column:span 2"><label>Parts / Materials</label>
+        <div id="jm-parts-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:6px"></div>
+        <button type="button" onclick="addPartRow('jm-parts-list','jm-parts-total')"
+          style="background:var(--card);border:1px solid var(--border);color:var(--muted);
+                 border-radius:var(--radius);padding:6px 14px;font-size:12px;cursor:pointer;
+                 font-family:var(--font)">+ Add Part</button>
+        <div id="jm-parts-total" style="margin-top:6px;font-size:13px;color:var(--accent)"></div>
+      </div>
       <div class="form-group"><label>Status</label>
         <select id="jm-status">${optionsHTML(JOB_STATUSES, j.status)}</select></div>
       <div class="form-group"><label>Device</label>
@@ -2148,6 +2283,28 @@ function editJob(id) {
   `;
   document.getElementById('edit-modal-save').onclick = () => saveEditJob(id);
   document.getElementById('edit-modal').style.display = 'flex';
+  // Pre-populate parts list
+  if (j.partsList && j.partsList.length > 0) {
+    j.partsList.forEach(p => {
+      addPartRow('jm-parts-list', 'jm-parts-total');
+      const list = document.getElementById('jm-parts-list');
+      const rows = list.querySelectorAll('div');
+      const lastRow = rows[rows.length - 1];
+      const inputs  = lastRow.querySelectorAll('input');
+      if (inputs[0]) inputs[0].value = p.name;
+      if (inputs[1]) { inputs[1].value = p.cost; }
+    });
+    updatePartsTotal('jm-parts-list', 'jm-parts-total');
+  } else if (j.parts > 0) {
+    // Migrate existing single-value parts into a row
+    addPartRow('jm-parts-list', 'jm-parts-total');
+    const list = document.getElementById('jm-parts-list');
+    const rows = list.querySelectorAll('div');
+    const inputs = rows[0].querySelectorAll('input');
+    if (inputs[0]) inputs[0].value = 'Parts & Materials';
+    if (inputs[1]) inputs[1].value = j.parts;
+    updatePartsTotal('jm-parts-list', 'jm-parts-total');
+  }
 }
 
 function saveEditJob(id) {
@@ -2155,7 +2312,10 @@ function saveEditJob(id) {
   if (!fname) { alert('Customer first name is required.'); return; }
   const lname    = document.getElementById('jm-lname').value.trim();
   const fullName = fname + (lname ? ' ' + lname : '');
-  const parts    = parseFloat(document.getElementById('jm-parts').value) || 0;
+  const partsList = getPartsList('jm-parts-list');
+  const parts     = partsList.length > 0
+    ? partsList.reduce((s, p) => s + p.cost, 0)
+    : (parseFloat(document.getElementById('jm-parts') ? document.getElementById('jm-parts').value : '0') || 0);
   const tax      = parts * (getSettings().taxRate || 0);
   const jobs     = DB.get('pp_jobs') || [];
   DB.set('pp_jobs', jobs.map(j => j.id !== id ? j : Object.assign({}, j, {
@@ -2166,6 +2326,7 @@ function saveEditJob(id) {
     service:  document.getElementById('jm-service').value,
     labor:    parseFloat(document.getElementById('jm-labor').value) || 0,
     parts,
+    partsList: partsList.length > 0 ? partsList : undefined,
     tax,
     status:  document.getElementById('jm-status').value,
     device:  document.getElementById('jm-device').value.trim(),
@@ -2233,6 +2394,7 @@ function renderInvoice() {
         <button class="btn btn-ghost"
           onclick="currentInvoiceJobId=null;renderInvoice()">&larr; Change Job</button>
         <button class="btn btn-primary" onclick="window.print()">Print / Save PDF</button>
+        <button class="btn btn-ghost" onclick="sendInvoiceEmail()">Email to Customer</button>
       </div>
     </div>
     <div id="printable" style="background:#fff;color:#111;max-width:680px;padding:48px;
@@ -2288,7 +2450,15 @@ function renderInvoice() {
                 $${Number(job.labor).toFixed(2)}
               </td>
             </tr>` : ''}
-          ${job.parts > 0 ? `
+          ${job.partsList && job.partsList.length > 0
+            ? job.partsList.map(p => `
+            <tr>
+              <td style="padding:12px 0;border-bottom:1px solid #f0f0f0;color:#555">${esc(p.name || 'Part')}</td>
+              <td style="padding:12px 0;border-bottom:1px solid #f0f0f0;text-align:right">
+                $${Number(p.cost).toFixed(2)}
+              </td>
+            </tr>`).join('')
+            : job.parts > 0 ? `
             <tr>
               <td style="padding:12px 0;border-bottom:1px solid #f0f0f0;color:#555">Parts &amp; Materials</td>
               <td style="padding:12px 0;border-bottom:1px solid #f0f0f0;text-align:right">
@@ -2326,6 +2496,86 @@ function renderInvoice() {
       }
     </style>
   `;
+}
+
+// ── Email invoice ─────────────────────────────────────────────────────────────
+function sendInvoiceEmail() {
+  const jobs = DB.get('pp_jobs') || [];
+  const job  = jobs.find(j => j.id === currentInvoiceJobId);
+  if (!job) return;
+
+  const customers = DB.get('pp_customers') || [];
+  const customer  = job.customerId
+    ? customers.find(c => c.id === job.customerId)
+    : customers.find(c => (c.firstName + ' ' + c.lastName).trim() === job.customer.trim());
+  const email = customer && customer.email ? customer.email.trim() : '';
+
+  if (!email) {
+    const notice = document.createElement('div');
+    notice.style.cssText = 'position:fixed;bottom:24px;right:24px;background:var(--card);border:1px solid var(--border);'
+      + 'border-radius:var(--radius);padding:12px 18px;font-family:var(--font);font-size:12px;'
+      + 'color:var(--muted);z-index:999;max-width:300px';
+    notice.textContent = 'No email on file for ' + job.customer + '. Add one in Customers.';
+    document.body.appendChild(notice);
+    setTimeout(() => notice.remove(), 5000);
+    return;
+  }
+
+  const s      = getSettings();
+  const jobs2  = DB.get('pp_jobs') || [];
+  const jobNum = jobs2.indexOf(job) + 1;
+  const invNum = 'PP-' + new Date().getFullYear() + '-' + String(jobNum).padStart(3, '0');
+  const tax    = Number(job.tax || 0);
+  const total  = (Number(job.labor) + Number(job.parts) + tax).toFixed(2);
+
+  fsdb.collection('mail').add({
+    to: email,
+    message: {
+      subject: 'Invoice ' + invNum + ' from ' + (s.businessName || 'Pixel Patcher'),
+      text: 'Hi ' + job.customer + ',
+
+'
+        + 'Please find your invoice below.
+
+'
+        + 'Invoice #: ' + invNum + '
+'
+        + 'Date: ' + today() + '
+
+'
+        + (job.service ? 'Service: ' + job.service + '
+' : '')
+        + (job.issue   ? 'Issue: '   + job.issue   + '
+' : '')
+        + (Number(job.labor) > 0 ? 'Labor: $' + Number(job.labor).toFixed(2) + '
+' : '')
+        + (Number(job.parts) > 0 ? 'Parts: $' + Number(job.parts).toFixed(2) + '
+' : '')
+        + (tax > 0              ? 'Tax: $'   + tax.toFixed(2)               + '
+' : '')
+        + '
+TOTAL DUE: $' + total + '
+
+'
+        + 'Payment accepted: Cash · Venmo · CashApp · Square
+'
+        + 'Questions? Text or call ' + (s.phone || '') + '
+
+'
+        + 'Thank you for choosing ' + (s.businessName || 'Pixel Patcher') + '!',
+    },
+  }).then(() => {
+    const notice = document.createElement('div');
+    notice.style.cssText = 'position:fixed;bottom:24px;right:24px;background:var(--card);border:1px solid var(--accent);'
+      + 'border-radius:var(--radius);padding:12px 18px;font-family:var(--font);font-size:12px;'
+      + 'color:var(--accent);z-index:999;max-width:300px';
+    notice.textContent = '✓ Invoice emailed to ' + email;
+    document.body.appendChild(notice);
+    setTimeout(() => notice.remove(), 5000);
+  }).catch(err => {
+    console.warn('Invoice email failed:', err);
+    alert('Failed to send email. Check console.');
+  });
 }
 
 // ── Dashboard ─────────────────────────────────────────────────────────────────
@@ -2368,9 +2618,13 @@ function renderDashboard() {
 
   const outstanding    = jobs.filter(j => !j.paid && j.status !== 'Closed')
                              .reduce((s, j) => s + Number(j.labor) + Number(j.parts) + Number(j.tax || 0), 0);
-  const unpaidCount    = jobs.filter(j => !j.paid && j.status !== 'Closed').length;
+  const unpaidJobs     = jobs.filter(j => !j.paid && j.status !== 'Closed');
+  const unpaidCount    = unpaidJobs.length;
+  const oldestUnpaid   = unpaidJobs.length > 0
+    ? Math.max(...unpaidJobs.map(j => daysSince(j.date)))
+    : 0;
   const outstandingSub = unpaidCount > 0
-    ? unpaidCount + ' unpaid job' + (unpaidCount > 1 ? 's' : '')
+    ? unpaidCount + ' unpaid job' + (unpaidCount > 1 ? 's' : '') + (oldestUnpaid > 0 ? ', oldest ' + oldestUnpaid + 'd' : '')
     : 'All clear';
 
   const pipeJobs    = jobs.filter(j => ['Pending','In Progress','Awaiting Parts'].includes(j.status));
@@ -2492,6 +2746,30 @@ function renderDashboard() {
         <span><span style="color:var(--negative)">&#9632;</span> Expenses</span>
       </div>
     </div>
+    ${(() => {
+      const paidJobs  = jobs.filter(j => j.paid && j.service);
+      if (paidJobs.length === 0) return '';
+      const byService = {};
+      paidJobs.forEach(j => {
+        const svc = j.service || 'Other';
+        byService[svc] = (byService[svc] || 0) + Number(j.labor) + Number(j.parts);
+      });
+      const sorted  = Object.entries(byService).sort((a, b) => b[1] - a[1]).slice(0, 5);
+      const maxSvc  = sorted[0][1] || 1;
+      return '<div class="card" style="margin-top:20px">'
+        + '<div style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:16px">Revenue by Service</div>'
+        + sorted.map(([svc, amt]) =>
+            '<div style="margin-bottom:12px">'
+            + '<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px">'
+            + '<span>' + esc(svc) + '</span>'
+            + '<span style="color:var(--positive)">' + fmt(amt) + '</span>'
+            + '</div>'
+            + '<div style="height:6px;background:var(--border);border-radius:3px">'
+            + '<div style="height:6px;background:var(--positive);border-radius:3px;width:' + Math.round((amt/maxSvc)*100) + '%"></div>'
+            + '</div></div>'
+          ).join('')
+        + '</div>';
+    })()}
   `;
 }
 
