@@ -583,7 +583,7 @@
   </script>
 </head>
 <body>
-  <nav>
+  <nav aria-label="Main navigation">
     <a class="nav-brand" href="#hero">
       <img src="Branding/logoblack.png" width="18" height="18" alt="" aria-hidden="true" style="image-rendering:pixelated;vertical-align:middle;margin-right:6px;">PIXEL PATCHER
     </a>
@@ -731,8 +731,8 @@
           <!-- netlify forms: data-netlify="true" enables form detection at deploy time -->
           <form id="contact-form" name="contact" method="POST" data-netlify="true">
             <input type="hidden" name="form-name" value="contact">
-            <input type="text"  name="name"    placeholder="Your Name"         required>
-            <input type="tel"   name="phone"   placeholder="Your Phone Number" required>
+            <input type="text"  name="name"    placeholder="Your Name"         autocomplete="name" required>
+            <input type="tel"   name="phone"   placeholder="Your Phone Number" autocomplete="tel"  required>
             <textarea           name="message" placeholder="What's going on with your computer?" required></textarea>
             <button type="submit">SEND MESSAGE &#9658;</button>
           </form>
