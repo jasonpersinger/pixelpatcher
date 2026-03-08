@@ -20,8 +20,15 @@
       --radius: 8px; --font: 'DM Sans', 'Segoe UI', system-ui, sans-serif;
       --font-pixel: 'Press Start 2P', 'Courier New', monospace;
     }
-    body { background: var(--bg); color: var(--text); font-family: var(--font); height: 100vh; }
-    #app { display: flex; height: 100vh; }
+    body { background: var(--bg); color: var(--text); font-family: var(--font); height: 100vh; overflow: hidden; }
+    #top-banner {
+      height: 48px; width: 100%;
+      background-image: url('pixelpatcher_header_chunky.png');
+      background-size: cover; background-position: center;
+      display: flex; align-items: center; padding: 0 12px;
+      position: relative; z-index: 100; flex-shrink: 0;
+    }
+    #app { display: flex; height: calc(100vh - 48px); }
     #sidebar {
       width: 185px; min-width: 185px; background: var(--sidebar);
       border-right: 1px solid var(--border); display: flex;
@@ -220,6 +227,12 @@
   </div>
 </div>
 
+<div id="top-banner">
+  <button id="hamburger-btn" onclick="toggleSidebar()"
+    style="display:none; background:rgba(0,0,0,0.5); border:1px solid rgba(201,160,0,0.4);
+           color:var(--accent); font-size:18px; padding:4px 10px; border-radius:var(--radius);
+           cursor:pointer; line-height:1; font-family:var(--font)">&#9776;</button>
+</div>
 <div id="app">
   <aside id="sidebar">
     <div class="logo">&#9632; PIXEL PATCHER</div>
