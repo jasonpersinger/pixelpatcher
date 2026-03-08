@@ -34,8 +34,7 @@
       border-right: 1px solid var(--border); display: flex;
       flex-direction: column; padding: 20px 12px;
     }
-    .logo { font-family: var(--font-pixel); font-size: 8px; letter-spacing: 1px;
-            color: var(--accent); margin-bottom: 28px; padding: 0 4px; line-height: 1.6; }
+    .logo { display: none; }
     nav { display: flex; flex-direction: column; gap: 4px; flex: 1; }
     .nav-btn {
       background: none; border: none; color: var(--muted); text-align: left;
@@ -235,7 +234,9 @@
 </div>
 <div id="app">
   <aside id="sidebar">
-    <div class="logo">&#9632; PIXEL PATCHER</div>
+    <img src="logoblack_gold.png" alt="Pixel Patcher"
+         style="width:100%; max-width:120px; height:auto; object-fit:contain;
+                display:block; margin:0 auto 20px;">
     <nav>
       <button class="nav-btn active" data-section="dashboard">Dashboard</button>
       <button class="nav-btn" data-section="income">Income</button>
