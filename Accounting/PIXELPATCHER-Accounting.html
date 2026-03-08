@@ -313,6 +313,25 @@
   </main>
 </div>
 <script>
+// ── Sidebar toggle (mobile) ───────────────────────────────────────────────────
+function toggleSidebar() {
+  const sidebar  = document.getElementById('sidebar');
+  const backdrop = document.getElementById('sidebar-backdrop');
+  const isOpen   = sidebar.classList.contains('open');
+  if (isOpen) {
+    sidebar.classList.remove('open');
+    backdrop.classList.remove('open');
+  } else {
+    sidebar.classList.add('open');
+    backdrop.classList.add('open');
+  }
+}
+
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-backdrop').classList.remove('open');
+}
+
 // ── Firebase init ─────────────────────────────────────────────────────────────
 const firebaseConfig = {
   apiKey: "AIzaSyD9DXFXJEudx4ODE-P1yYxAniM4jtqytJY",
@@ -509,6 +528,7 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
     const id = btn.dataset.section;
     document.getElementById(id).classList.add('active');
     renderSection(id);
+    closeSidebar();
   });
 });
 
