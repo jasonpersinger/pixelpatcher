@@ -121,6 +121,46 @@
     .bar-income  { background: var(--positive); }
     .bar-expense { background: var(--negative); }
     .chart-label { font-size: 10px; }
+
+    /* ── Sidebar backdrop (mobile) ─────────────────────────────── */
+    #sidebar-backdrop {
+      display: none; position: fixed; inset: 0; top: 48px;
+      background: rgba(0,0,0,0.6); z-index: 150;
+    }
+    #sidebar-backdrop.open { display: block; }
+
+    /* ── Mobile responsive ─────────────────────────────────────── */
+    @media (max-width: 768px) {
+      #hamburger-btn { display: flex !important; }
+
+      #sidebar {
+        position: fixed; top: 48px; left: 0;
+        height: calc(100vh - 48px); z-index: 200;
+        transform: translateX(-185px);
+        transition: transform 0.2s ease;
+      }
+      #sidebar.open { transform: translateX(0); }
+
+      #main { padding: 20px 16px; width: 100%; }
+
+      .kpi-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+      }
+      /* Single-col overrides become 1-col on very small screens */
+      @media (max-width: 400px) {
+        .kpi-grid { grid-template-columns: 1fr !important; }
+      }
+
+      /* Form grids already use auto-fit — fine on mobile */
+
+      /* Tables scroll horizontally — already handled by .table-wrap */
+
+      /* Page title smaller on mobile */
+      .page-title { font-size: 15px; }
+
+      /* Totals bar wraps */
+      .totals-bar { flex-wrap: wrap; gap: 12px; }
+    }
   </style>
 </head>
 <body>
@@ -232,6 +272,7 @@
            color:var(--accent); font-size:18px; padding:4px 10px; border-radius:var(--radius);
            cursor:pointer; line-height:1; font-family:var(--font)">&#9776;</button>
 </div>
+<div id="sidebar-backdrop" onclick="closeSidebar()"></div>
 <div id="app">
   <aside id="sidebar">
     <img src="logoblack_gold.png" alt="Pixel Patcher"
