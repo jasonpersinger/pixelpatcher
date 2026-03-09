@@ -2784,6 +2784,7 @@ function sendInvoiceEmail() {
         + (Number(job.parts) > 0 ? 'Parts: $' + Number(job.parts).toFixed(2) + '\n' : '')
         + (tax > 0              ? 'Tax: $'   + tax.toFixed(2)               + '\n' : '')
         + '\nTOTAL DUE: $' + total + '\n\n'
+        + (job.squarePaymentLink ? 'Pay online: ' + job.squarePaymentLink + '\n\n' : '')
         + 'Payment accepted: Cash \u00b7 Venmo \u00b7 CashApp \u00b7 Square\n'
         + 'Questions? Text or call ' + (s.phone || '') + '\n\n'
         + 'Thank you for choosing ' + (s.businessName || 'Pixel Patcher') + '!',
