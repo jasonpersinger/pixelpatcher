@@ -436,6 +436,7 @@ fsauth.onAuthStateChanged(async user => {
     await loadFromFirestore(user.uid);
     seedData();
     renderDashboard();
+    loadBookingRequests();
   } else {
     showSignInOverlay();
   }
@@ -2738,6 +2739,96 @@ function sendInvoiceEmail() {
     console.warn('Invoice email failed:', err);
     alert('Failed to send email. Check console.');
   });
+}
+
+// ── Booking requests importer ─────────────────────────────────────────────────
+async function loadBookingRequests() {
+  const user = fsauth.currentUser;
+  if (!user) return;
+  try {
+    const snap = await fsdb.collection('bookingRequests')
+      .where('processed', '==', false)
+      .orderBy('createdAt', 'asc')
+      .get();
+    if (snap.empty) return;
+
+    const requests = [];
+    snap.forEach(doc => requests.push(doc.data()));
+
+    // Show import banner on dashboard
+    const banner = document.createElement('div');
+    banner.id = 'booking-import-banner';
+    banner.style.cssText = 'background:rgba(201,160,0,0.12);border:1px solid var(--accent);'
+      + 'border-radius:var(--radius);padding:14px 20px;margin-bottom:20px;'
+      + 'display:flex;align-items:center;justify-content:space-between;font-family:var(--font)';
+    const msg = document.createElement('span');
+    msg.style.cssText = 'font-size:13px;color:var(--accent)';
+    msg.textContent = '★ ' + requests.length + ' new booking request'
+      + (requests.length > 1 ? 's' : '') + ' from the website';
+    const importBtn = document.createElement('button');
+    importBtn.className = 'btn btn-primary';
+    importBtn.style.cssText = 'font-size:12px;padding:6px 16px';
+    importBtn.textContent = 'Import as Pending Jobs';
+    importBtn.addEventListener('click', () => importBookingRequests(requests));
+    banner.appendChild(msg);
+    banner.appendChild(importBtn);
+
+    const dashboard = document.getElementById('dashboard');
+    if (dashboard) {
+      const existing = document.getElementById('booking-import-banner');
+      if (existing) existing.remove();
+      dashboard.prepend(banner);
+    }
+  } catch(err) {
+    console.warn('loadBookingRequests failed:', err);
+  }
+}
+
+async function importBookingRequests(requests) {
+  for (const r of requests) {
+    // Create customer if needed
+    const custs = DB.get('pp_customers') || [];
+    let cust = custs.find(c =>
+      c.phone === r.phone ||
+      (c.firstName + ' ' + c.lastName).trim().toLowerCase() === r.name.toLowerCase()
+    );
+    if (!cust) {
+      const nameParts = r.name.trim().split(' ');
+      cust = {
+        id: uid(), firstName: nameParts[0], lastName: nameParts.slice(1).join(' '),
+        phone: r.phone, email: r.email || '', street: '', city: '', state: '', zip: '', notes: '',
+      };
+      DB.push('pp_customers', cust);
+    }
+
+    // Create pending job
+    DB.push('pp_jobs', {
+      id: uid(),
+      date: r.preferredDate || today(),
+      customer: r.name,
+      customerId: cust.id,
+      phone: r.phone,
+      address: '',
+      issue: r.issue,
+      service: '',
+      device: r.device || '',
+      model: '',
+      notes: 'Booked via website' + (r.email ? ' · ' + r.email : ''),
+      labor: 0, parts: 0, tax: 0,
+      status: 'Pending',
+      paid: false,
+      source: 'booking',
+    });
+
+    // Mark processed in Firestore
+    await fsdb.collection('bookingRequests').doc(r.id).update({ processed: true });
+  }
+
+  // Remove banner and re-render dashboard
+  const banner = document.getElementById('booking-import-banner');
+  if (banner) banner.remove();
+  renderDashboard();
+  alert(requests.length + ' job' + (requests.length > 1 ? 's' : '') + ' imported as Pending.');
 }
 
 // ── Dashboard ─────────────────────────────────────────────────────────────────
