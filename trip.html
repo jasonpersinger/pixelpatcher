@@ -274,11 +274,16 @@
     });
 
     // Handle redirect result (fires on page load after redirect)
-    fsauth.getRedirectResult().catch(err => console.warn('Redirect result error:', err));
+    fsauth.getRedirectResult().then(result => {
+      if (result && result.user) console.log('[trip] redirect result user:', result.user.email);
+    }).catch(err => {
+      console.error('[trip] getRedirectResult error:', err.code, err.message);
+    });
 
     // Auth state
     fsauth.onAuthStateChanged(user => {
-      if (!user) { showState('signin'); return; }
+      if (!user) { console.log('[trip] onAuthStateChanged: no user'); showState('signin'); return; }
+      console.log('[trip] onAuthStateChanged: user =', user.email, '| allowed =', ALLOWED.includes(user.email));
       if (!ALLOWED.includes(user.email)) {
         fsauth.signOut();
         showState('signin');
