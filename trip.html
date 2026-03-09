@@ -270,26 +270,15 @@
 
     // Sign-in
     document.getElementById('btn-signin').addEventListener('click', () => {
-      fsauth.signInWithRedirect(new firebase.auth.GoogleAuthProvider());
-    });
-
-    // Handle redirect result (fires on page load after redirect)
-    fsauth.getRedirectResult().then(result => {
-      if (result && result.user) console.log('[trip] redirect result user:', result.user.email);
-    }).catch(err => {
-      console.error('[trip] getRedirectResult error:', err.code, err.message);
-      alert('Auth error: ' + err.code + '\n' + err.message);
+      fsauth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(err => {
+        alert('Sign-in failed: ' + err.code + '\n' + err.message);
+      });
     });
 
     // Auth state
     fsauth.onAuthStateChanged(user => {
-      if (!user) { alert('[trip] no user'); showState('signin'); return; }
-      alert('[trip] user: ' + user.email + ' | allowed: ' + ALLOWED.includes(user.email));
-      if (!ALLOWED.includes(user.email)) {
-        fsauth.signOut();
-        showState('signin');
-        return;
-      }
+      if (!user) { showState('signin'); return; }
+      if (!ALLOWED.includes(user.email)) { fsauth.signOut(); showState('signin'); return; }
       const active = JSON.parse(localStorage.getItem(TRIP_KEY));
       if (active) {
         document.getElementById('end-from-display').textContent    = active.from;
