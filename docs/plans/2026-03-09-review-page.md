@@ -1,0 +1,163 @@
+# Google Review Page — Implementation Plan
+
+> **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
+
+**Goal:** A branded `pixelpatcher.com/review` page that bridges customers to the Google review form.
+
+**Architecture:** Single static `review.html` file in the repo root. Netlify auto-deploys it on `git push origin main`. Matches existing site brand (dark bg, gold accents, Press Start 2P / DM Sans fonts).
+
+**Tech Stack:** Static HTML/CSS, Netlify hosting.
+
+**Brand tokens (from `index.html`):**
+- `--black: #000000`, `--gold: #C9A000`, `--purple: #4B2A8C`, `--white: #ffffff`, `--gray: #aaaaaa`
+- Fonts: `Press Start 2P` (pixel headings), `DM Sans` (body)
+- CDN: `https://fonts.googleapis.com/css2?family=Press+Start+2P&family=DM+Sans:wght@400;500;700&display=swap`
+- Logo: `Branding/pixelpatcherLOGO.png`
+- Favicon: `Branding/logoblack.png`
+
+**Google Review URL:**
+```
+https://search.google.com/local/writereview?placeid=ChIJ3TP7T08NTYgRYO4cYbmwsdU
+```
+
+---
+
+### Task 1: Create `review.html`
+
+**Files:**
+- Create: `review.html` (repo root)
+
+**Step 1: Create the file with this exact content**
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Leave a Review — Pixel Patcher</title>
+  <meta name="description" content="Leave a Google review for Pixel Patcher PC Repair in Roanoke, VA.">
+  <link rel="icon" type="image/png" href="Branding/logoblack.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --black:      #000000;
+      --gold:       #C9A000;
+      --white:      #ffffff;
+      --gray:       #aaaaaa;
+      --font-pixel: 'Press Start 2P', monospace;
+      --font-body:  'DM Sans', sans-serif;
+    }
+
+    body {
+      background: var(--black);
+      color: var(--white);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 16px;
+    }
+
+    .card {
+      max-width: 420px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .logo {
+      width: 160px;
+      height: auto;
+      margin: 0 auto 32px;
+      display: block;
+    }
+
+    .heading {
+      font-family: var(--font-pixel);
+      font-size: 12px;
+      color: var(--gold);
+      line-height: 1.8;
+      margin-bottom: 16px;
+    }
+
+    .message {
+      font-size: 16px;
+      color: var(--gray);
+      line-height: 1.6;
+      margin-bottom: 36px;
+    }
+
+    .review-btn {
+      display: inline-block;
+      width: 100%;
+      padding: 16px 24px;
+      background: var(--gold);
+      color: var(--black);
+      font-family: var(--font-pixel);
+      font-size: 10px;
+      text-decoration: none;
+      border-radius: 6px;
+      letter-spacing: 0.05em;
+      transition: opacity 0.2s;
+    }
+
+    .review-btn:hover { opacity: 0.85; }
+
+    .back-link {
+      display: block;
+      margin-top: 20px;
+      font-size: 12px;
+      color: var(--gray);
+      text-decoration: none;
+    }
+
+    .back-link:hover { color: var(--gold); }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <img src="Branding/pixelpatcherLOGO.png" alt="Pixel Patcher" class="logo">
+
+    <h1 class="heading">Enjoying your repair?</h1>
+    <p class="message">It only takes 30 seconds and means the world to a small business.</p>
+
+    <a href="https://search.google.com/local/writereview?placeid=ChIJ3TP7T08NTYgRYO4cYbmwsdU"
+       class="review-btn">
+      Leave a Review ⭐
+    </a>
+
+    <a href="https://www.pixelpatcher.com" class="back-link">pixelpatcher.com</a>
+  </div>
+</body>
+</html>
+```
+
+**Step 2: Commit**
+
+```bash
+git add review.html
+git commit -m "feat: add Google review redirect page"
+```
+
+---
+
+### Task 2: Deploy and verify
+
+**Step 1: Push to Netlify**
+
+```bash
+git push origin main
+```
+
+Wait ~30 seconds for Netlify to deploy.
+
+**Step 2: Verify**
+
+- [ ] Open https://www.pixelpatcher.com/review — page loads with logo, heading, message, button
+- [ ] Click "Leave a Review ⭐" — opens Google Maps review form for Pixel Patcher
+- [ ] Page looks correct on mobile (test in browser devtools or real phone)
