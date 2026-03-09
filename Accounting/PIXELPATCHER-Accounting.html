@@ -2532,6 +2532,50 @@ function saveEditJob(id) {
 // ── Invoice section ──────────────────────────────────────────────────────────
 let currentInvoiceJobId = null;
 
+// ── Square payment link generation ────────────────────────────────────────
+async function generateSquareLink(job, total, invNum) {
+  // Use cached link if total hasn't changed
+  if (job.squarePaymentLink && job.squarePaymentLinkTotal === total) {
+    applySquareLinkToInvoice(job.squarePaymentLink);
+    return;
+  }
+
+  const linkEl = document.getElementById('sq-pay-link');
+  const copyBtn = document.getElementById('sq-copy-btn');
+  if (linkEl) linkEl.textContent = 'Generating link…';
+
+  try {
+    const fn = fsfunctions.httpsCallable('createSquarePaymentLink');
+    const result = await fn({ amount: total, invoiceNum: invNum, customerName: job.customer });
+    const url = result.data.url;
+
+    // Cache on job record
+    const jobs = DB.get('pp_jobs') || [];
+    const idx  = jobs.findIndex(j => j.id === job.id);
+    if (idx !== -1) {
+      jobs[idx].squarePaymentLink      = url;
+      jobs[idx].squarePaymentLinkTotal = total;
+      DB.set('pp_jobs', jobs);
+    }
+
+    applySquareLinkToInvoice(url);
+  } catch (err) {
+    console.warn('Square link generation failed:', err);
+    if (linkEl) linkEl.textContent = 'Payment link unavailable';
+  }
+}
+
+function applySquareLinkToInvoice(url) {
+  const linkEl  = document.getElementById('sq-pay-link');
+  const copyBtn = document.getElementById('sq-copy-btn');
+  if (linkEl)  linkEl.textContent = url;
+  if (copyBtn) { copyBtn.style.display = ''; copyBtn.onclick = () => {
+    navigator.clipboard.writeText(url);
+    copyBtn.textContent = 'Copied!';
+    setTimeout(() => copyBtn.textContent = 'Copy Link', 2000);
+  }; }
+}
+
 function openInvoice(jobId) {
   currentInvoiceJobId = jobId;
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
