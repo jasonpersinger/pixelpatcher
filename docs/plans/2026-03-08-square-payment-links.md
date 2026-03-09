@@ -8,21 +8,7 @@
 
 **Tech Stack:** Firebase Functions v1 (Node 22), Square Payment Links API (`quick_pay`), Firebase JS SDK 10 compat, vanilla JS/HTML.
 
----
-
-## Prerequisites (Jason must do these manually before implementation)
-
-1. Go to https://developer.squareup.com/apps → select your app (or create one)
-2. Under **Production** credentials, copy your **Access Token**
-3. Go to https://squareup.com/dashboard/locations → copy your **Location ID**
-4. Run in terminal from `Accounting/`:
-   ```bash
-   npx firebase-tools@latest functions:config:set \
-     square.access_token="YOUR_PRODUCTION_ACCESS_TOKEN" \
-     square.location_id="YOUR_LOCATION_ID"
-   ```
-5. Verify: `npx firebase-tools@latest functions:config:get`
-   Expected output includes `{ "square": { "access_token": "...", "location_id": "..." } }`
+**Credentials:** Stored in `Accounting/functions/.env` (gitignored) as `SQUARE_ACCESS_TOKEN` and `SQUARE_LOCATION_ID`. Already configured — do not commit this file.
 
 ---
 
@@ -45,8 +31,8 @@ exports.createSquarePaymentLink = functions.https.onCall(async (data, context) =
     throw new functions.https.HttpsError('invalid-argument', 'Invalid amount.');
   }
 
-  const token      = functions.config().square.access_token;
-  const locationId = functions.config().square.location_id;
+  const token      = process.env.SQUARE_ACCESS_TOKEN;
+  const locationId = process.env.SQUARE_LOCATION_ID;
 
   const resp = await fetch('https://connect.squareup.com/v2/online-checkout/payment-links', {
     method: 'POST',
