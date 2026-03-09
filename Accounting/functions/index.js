@@ -107,3 +107,43 @@ exports.createJobFromIntake = functions.https.onRequest(async (req, res) => {
 
   res.json({ success: true });
 });
+
+// ── Square Payment Link ────────────────────────────────────────────────────
+exports.createSquarePaymentLink = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'Must be signed in.');
+  }
+
+  const { amount, invoiceNum, customerName } = data;
+  if (!amount || amount <= 0) {
+    throw new functions.https.HttpsError('invalid-argument', 'Invalid amount.');
+  }
+
+  const token      = process.env.SQUARE_ACCESS_TOKEN;
+  const locationId = process.env.SQUARE_LOCATION_ID;
+
+  const resp = await fetch('https://connect.squareup.com/v2/online-checkout/payment-links', {
+    method: 'POST',
+    headers: {
+      'Authorization':  `Bearer ${token}`,
+      'Content-Type':   'application/json',
+      'Square-Version': '2024-01-18',
+    },
+    body: JSON.stringify({
+      idempotency_key: `${invoiceNum}-${Date.now()}`,
+      quick_pay: {
+        name:         `${invoiceNum} — ${customerName}`,
+        price_money:  { amount: Math.round(amount * 100), currency: 'USD' },
+        location_id:  locationId,
+      },
+    }),
+  });
+
+  const result = await resp.json();
+  if (!resp.ok) {
+    console.error('Square API error:', JSON.stringify(result));
+    throw new functions.https.HttpsError('internal', 'Square API error — check function logs.');
+  }
+
+  return { url: result.payment_link.url };
+});
