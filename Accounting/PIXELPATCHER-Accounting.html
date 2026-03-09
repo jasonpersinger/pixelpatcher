@@ -354,7 +354,7 @@ const fsauth    = firebase.auth();
 const fsstorage = firebase.storage();
 
 // ── Auth ─────────────────────────────────────────────────────────────────────
-const FS_KEYS = ['pp_settings','pp_income','pp_expenses','pp_mileage','pp_jobs','pp_seeded','pp_followups','pp_customers'];
+const FS_KEYS = ['pp_settings','pp_income','pp_expenses','pp_mileage','pp_jobs','pp_seeded','pp_followups','pp_customers','pp_templates'];
 
 function showSignInOverlay() {
   document.getElementById('signin-overlay').style.display = 'flex';
@@ -651,6 +651,46 @@ function renderSettings() {
       </div>
       <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
     </div>
+    <div class="page-title" style="margin-top:32px">Job Templates</div>
+    <div class="card" style="max-width:700px">
+      <div class="section-header" style="margin-bottom:16px">
+        <div style="font-size:13px;color:var(--muted)">Quick-launch templates appear as pills on the Jobs tab.</div>
+        <button class="btn btn-primary" style="font-size:12px;padding:6px 14px"
+          onclick="toggleForm('tmpl-form')">+ Add Template</button>
+      </div>
+      <div class="add-form" id="tmpl-form" style="margin-bottom:20px">
+        <div class="form-grid">
+          <div class="form-group"><label>Template Name</label>
+            <input id="tmpl-name" placeholder="e.g. iPhone Screen Replacement"></div>
+          <div class="form-group"><label>Device</label>
+            <input id="tmpl-device" placeholder="iPhone, MacBook, etc."></div>
+          <div class="form-group"><label>Model</label>
+            <input id="tmpl-model" placeholder="13 Pro, Air M2, etc."></div>
+          <div class="form-group"><label>Issue Description</label>
+            <input id="tmpl-issue" placeholder="Cracked screen, etc."></div>
+          <div class="form-group"><label>Service Performed</label>
+            <input id="tmpl-service" placeholder="Screen replacement, etc."></div>
+          <div class="form-group"><label>Labor ($)</label>
+            <input type="number" step="0.01" id="tmpl-labor" placeholder="0.00"></div>
+        </div>
+        <button class="btn btn-primary" onclick="saveTemplate()">Save Template</button>
+      </div>
+      ${(() => {
+        const tmpls = DB.get('pp_templates') || [];
+        if (tmpls.length === 0) return '<div style="color:var(--muted);font-size:13px">No templates yet.</div>';
+        return '<div class="table-wrap"><table>'
+          + '<thead><tr><th>Name</th><th>Device</th><th>Service</th><th>Labor</th><th></th></tr></thead>'
+          + '<tbody>'
+          + tmpls.map(t => `<tr>
+              <td><strong>${esc(t.name)}</strong></td>
+              <td style="color:var(--muted)">${esc([t.device, t.model].filter(Boolean).join(' ')) || '&mdash;'}</td>
+              <td style="color:var(--muted)">${esc(t.service) || '&mdash;'}</td>
+              <td style="color:var(--positive)">${fmt(t.labor || 0)}</td>
+              <td><button class="btn btn-danger" onclick="deleteTemplate('${esc(t.id)}')">&#x2715;</button></td>
+            </tr>`).join('')
+          + '</tbody></table></div>';
+      })()}
+    </div>
   `;
 }
 
@@ -844,6 +884,47 @@ function renderTax() {
   note.style.cssText = 'font-size:11px;color:var(--muted);text-align:center;margin-top:8px;padding:16px';
   note.textContent = 'Estimates based on your ' + Math.round(rate * 100) + '% tax reserve rate \u2014 actual liability may vary. Consult a tax professional.';
   section.appendChild(note);
+}
+
+// ── Job Templates ─────────────────────────────────────────────────────────────
+function saveTemplate() {
+  const name = (document.getElementById('tmpl-name') || {}).value || '';
+  if (!name.trim()) { alert('Template name is required.'); return; }
+  DB.push('pp_templates', {
+    id:      uid(),
+    name:    name.trim(),
+    device:  (document.getElementById('tmpl-device')  || {}).value || '',
+    model:   (document.getElementById('tmpl-model')   || {}).value || '',
+    issue:   (document.getElementById('tmpl-issue')   || {}).value || '',
+    service: (document.getElementById('tmpl-service') || {}).value || '',
+    labor:   parseFloat((document.getElementById('tmpl-labor') || {}).value) || 0,
+  });
+  renderSettings();
+}
+
+function deleteTemplate(id) {
+  if (!confirm('Delete this template?')) return;
+  DB.del('pp_templates', id);
+  renderSettings();
+}
+
+function loadTemplate(id) {
+  const tmpls = DB.get('pp_templates') || [];
+  const t = tmpls.find(x => x.id === id);
+  if (!t) return;
+  // Open the add job form if not already open
+  const form = document.getElementById('job-form');
+  if (form && !form.classList.contains('open')) form.classList.add('open');
+  // Pre-fill fields
+  const set = (elId, val) => { const el = document.getElementById(elId); if (el) el.value = val || ''; };
+  set('j-device',  t.device);
+  set('j-model',   t.model);
+  set('j-issue',   t.issue);
+  set('j-service', t.service);
+  set('j-labor',   t.labor || '');
+  // Scroll to form
+  const jobSection = document.getElementById('jobs');
+  if (jobSection) jobSection.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function saveSettings() {
