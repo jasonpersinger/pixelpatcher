@@ -18,6 +18,12 @@
       "**/.*",
       "**/node_modules/**",
       "functions/**"
+    ],
+    "rewrites": [
+      {
+        "source": "/",
+        "destination": "/PIXELPATCHER-Accounting.html"
+      }
     ]
   }
 }
