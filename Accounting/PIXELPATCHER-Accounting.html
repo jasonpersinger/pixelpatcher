@@ -2822,7 +2822,10 @@ async function importBookingRequests(requests) {
       service: '',
       device: r.device || '',
       model: '',
-      notes: 'Booked via website' + (r.email ? ' · ' + r.email : ''),
+      notes: (r.serviceType === 'onsite'
+        ? '[On-site] ' + (r.address || '') + ' — '
+        : '[Drop-off] — ')
+        + 'Booked via website' + (r.email ? ' · ' + r.email : ''),
       labor: 0, parts: 0, tax: 0,
       status: 'Pending',
       paid: false,
