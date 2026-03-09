@@ -2167,6 +2167,23 @@ function renderJobs() {
       </div>
       <button class="btn btn-primary" onclick="addJob()">Add Job</button>
     </div>
+    ${(() => {
+      const tmpls = DB.get('pp_templates') || [];
+      if (tmpls.length === 0) return '';
+      return '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center">'
+        + '<span style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">Quick Start:</span>'
+        + tmpls.map(t =>
+            `<button onclick="loadTemplate('${esc(t.id)}')"
+               style="background:transparent;border:1px solid var(--accent);color:var(--accent);
+                      border-radius:20px;padding:5px 14px;font-size:12px;cursor:pointer;
+                      font-family:var(--font);font-weight:600;white-space:nowrap">${esc(t.name)}</button>`
+          ).join('')
+        + `<button onclick="showSection('settings')"
+             style="background:transparent;border:1px solid var(--border);color:var(--muted);
+                    border-radius:20px;padding:5px 12px;font-size:11px;cursor:pointer;
+                    font-family:var(--font)">+ Manage</button>`
+        + '</div>';
+    })()}
     <div class="totals-bar">
       <div class="total-item"><label>Total Jobs</label><span>${jobs.length}</span></div>
       <div class="total-item"><label>Completed</label>
