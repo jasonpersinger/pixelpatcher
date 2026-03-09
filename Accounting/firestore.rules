@@ -8,5 +8,10 @@ service cloud.firestore {
       allow create: if request.auth != null
         && request.auth.token.email == 'jason.persinger@gmail.com';
     }
+    // Public booking requests from marketing site
+    match /bookingRequests/{docId} {
+      allow create: if true;
+      allow read, update: if request.auth != null;
+    }
   }
 }
