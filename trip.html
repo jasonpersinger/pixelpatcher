@@ -283,8 +283,8 @@
 
     // Auth state
     fsauth.onAuthStateChanged(user => {
-      if (!user) { console.log('[trip] onAuthStateChanged: no user'); showState('signin'); return; }
-      console.log('[trip] onAuthStateChanged: user =', user.email, '| allowed =', ALLOWED.includes(user.email));
+      if (!user) { alert('[trip] no user'); showState('signin'); return; }
+      alert('[trip] user: ' + user.email + ' | allowed: ' + ALLOWED.includes(user.email));
       if (!ALLOWED.includes(user.email)) {
         fsauth.signOut();
         showState('signin');
