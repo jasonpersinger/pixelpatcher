@@ -278,6 +278,7 @@
       if (result && result.user) console.log('[trip] redirect result user:', result.user.email);
     }).catch(err => {
       console.error('[trip] getRedirectResult error:', err.code, err.message);
+      alert('Auth error: ' + err.code + '\n' + err.message);
     });
 
     // Auth state
