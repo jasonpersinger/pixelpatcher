@@ -539,6 +539,17 @@ function esc(str) {
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
+function fmtPhone(v) {
+  const d = v.replace(/\D/g, '').slice(0, 10);
+  if (d.length < 4) return d;
+  if (d.length < 7) return '(' + d.slice(0,3) + ') ' + d.slice(3);
+  return '(' + d.slice(0,3) + ') ' + d.slice(3,6) + '-' + d.slice(6);
+}
+
+function validEmail(v) {
+  return !v || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
+}
+
 // ── Navigation ───────────────────────────────────────────────────────────────
 document.querySelectorAll('.nav-btn').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -2151,9 +2162,9 @@ function renderJobs() {
         <div class="form-group"><label>Last Name</label>
           <input id="j-lname" placeholder="Last name"></div>
         <div class="form-group"><label>Phone</label>
-          <input id="j-phone" placeholder="555-000-0000"></div>
+          <input id="j-phone" type="tel" placeholder="(540) 555-0000" oninput="this.value=fmtPhone(this.value)"></div>
         <div class="form-group"><label>Email <span style="color:var(--muted);font-weight:400">(optional)</span></label>
-          <input id="j-email" type="email" placeholder="jane@example.com"></div>
+          <input id="j-email" type="text" inputmode="email" placeholder="jane@example.com"></div>
         <div class="form-group"><label>Street <span style="color:var(--muted);font-weight:400">(optional)</span></label>
           <input id="j-street" placeholder="123 Main St"></div>
         <div class="form-group"><label>City <span style="color:var(--muted);font-weight:400">(optional)</span></label>
@@ -2188,7 +2199,7 @@ function renderJobs() {
         <div class="form-group" style="grid-column:span 2"><label>Internal Notes <span style="color:var(--muted);font-weight:400">(optional, not on invoice)</span></label>
           <textarea id="j-notes" rows="2" style="width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:8px;color:var(--text);font-family:var(--font);font-size:13px;resize:vertical" placeholder="Tech notes, customer info, anything internal"></textarea></div>
       </div>
-      <button class="btn btn-primary" onclick="addJob()">Add Job</button>
+      <button type="button" class="btn btn-primary" onclick="addJob()">Add Job</button>
     </div>
     ${(() => {
       const tmpls = DB.get('pp_templates') || [];
@@ -2329,6 +2340,8 @@ function addJob() {
   const fname = document.getElementById('j-fname').value.trim();
   const lname = document.getElementById('j-lname').value.trim();
   if (!fname) { alert('Customer first name is required.'); return; }
+  const emailVal = document.getElementById('j-email').value.trim();
+  if (!validEmail(emailVal)) { alert('Please enter a valid email address.'); return; }
   const fullName = fname + (lname ? ' ' + lname : '');
 
   // Find or create customer record
@@ -2575,7 +2588,7 @@ function editJob(id) {
       <div class="form-group"><label>Last Name</label>
         <input id="jm-lname" value="${esc(lname)}"></div>
       <div class="form-group"><label>Phone</label>
-        <input id="jm-phone" value="${esc(j.phone || '')}"></div>
+        <input id="jm-phone" type="tel" value="${esc(j.phone || '')}" oninput="this.value=fmtPhone(this.value)"></div>
       <div class="form-group"><label>Issue</label>
         <input id="jm-issue" value="${esc(j.issue || '')}"></div>
       <div class="form-group"><label>Service Performed</label>
