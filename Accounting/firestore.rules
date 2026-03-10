@@ -13,5 +13,17 @@ service cloud.firestore {
       allow create: if true;
       allow read, update: if request.auth != null;
     }
+    // Public repair tickets — read by anyone, create/update by Jason (auth)
+    // Customers can acknowledge once: only allowed fields are customerAcknowledged + acknowledgedAt
+    match /tickets/{ticketId} {
+      allow read: if true;
+      allow create, update: if request.auth != null
+        || (
+          !resource.data.customerAcknowledged &&
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['customerAcknowledged', 'acknowledgedAt']) &&
+          request.resource.data.customerAcknowledged == true
+        );
+    }
   }
 }
