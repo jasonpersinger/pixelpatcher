@@ -2226,7 +2226,8 @@ function renderJobs() {
               const expCount     = linkedExpenseCount[j.id] || 0;
               const partsForCalc = expCount > 0 ? linkedExpenseSum[j.id] : Number(j.parts);
               const total        = Number(j.labor) + partsForCalc + Number(j.tax || 0);
-              return `<tr>
+              const isOverdue = !j.paid && j.status !== 'Closed' && daysSince(j.date) > 7;
+              return `<tr style="${isOverdue ? 'background:rgba(220,38,38,0.08);border-left:3px solid var(--negative)' : ''}">
                 <td style="color:var(--muted)">#${num}</td>
                 <td>${esc(j.date)}</td>
                 <td><strong>${esc(j.customer)}</strong></td>
