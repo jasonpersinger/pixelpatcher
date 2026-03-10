@@ -448,6 +448,7 @@ fsauth.onAuthStateChanged(async user => {
     seedData();
     renderDashboard();
     loadBookingRequests();
+    setupTicketAckListener();
   } else {
     showSignInOverlay();
   }
@@ -2271,11 +2272,13 @@ function renderJobs() {
                          onclick="openReceiptModal('${esc(j.id)}','pp_jobs',renderJobs,'photoUrl')">+ Photo</button>`}
                   <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px"
                     onclick="openFollowupModal('${esc(j.customer)}','${esc(j.phone)}')">Follow-up</button>
-                  ${j.ticketId
-                    ? `<button class="btn btn-ghost" style="font-size:11px;padding:4px 10px;color:var(--gold)"
-                         onclick="shareTicket('${esc(j.id)}')">&#x1F4CB; Send</button>`
-                    : `<button class="btn btn-ghost" style="font-size:11px;padding:4px 10px"
-                         onclick="generateTicket('${esc(j.id)}')">Ticket</button>`}
+                  ${j.customerAcknowledged
+                    ? `<span style="color:var(--positive);font-size:11px;font-weight:700;padding:4px 6px">&#x2713; Agreed</span>`
+                    : j.ticketId
+                      ? `<button class="btn btn-ghost" style="font-size:11px;padding:4px 10px;color:var(--gold)"
+                           onclick="shareTicket('${esc(j.id)}')">&#x1F4CB; Send</button>`
+                      : `<button class="btn btn-ghost" style="font-size:11px;padding:4px 10px"
+                           onclick="generateTicket('${esc(j.id)}')">Ticket</button>`}
                   <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px"
                     onclick="editJob('${esc(j.id)}')">&#x270E;</button>
                   <button class="btn btn-danger" onclick="deleteJob('${esc(j.id)}')">&#x2715;</button>
@@ -2464,6 +2467,27 @@ function syncTicketStatus(j) {
   if (!j || !j.ticketId) return;
   fsdb.collection('tickets').doc(j.ticketId).update({ status: j.status })
     .catch(err => console.warn('Ticket status sync failed:', err));
+}
+
+function setupTicketAckListener() {
+  fsdb.collection('tickets').where('customerAcknowledged', '==', true)
+    .onSnapshot(snap => {
+      const jobs = DB.get('pp_jobs') || [];
+      let changed = false;
+      snap.forEach(doc => {
+        const t = doc.data();
+        const idx = jobs.findIndex(j => j.ticketId === t.ticketId);
+        if (idx !== -1 && !jobs[idx].customerAcknowledged) {
+          jobs[idx].customerAcknowledged = true;
+          jobs[idx].acknowledgedAt = t.acknowledgedAt || null;
+          changed = true;
+        }
+      });
+      if (changed) {
+        DB.set('pp_jobs', jobs);
+        if (document.getElementById('jobs').offsetParent !== null) renderJobs();
+      }
+    }, err => console.warn('Ticket ack listener error:', err));
 }
 
 function sendJobReadyEmail(job) {
