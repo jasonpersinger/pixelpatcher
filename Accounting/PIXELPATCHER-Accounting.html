@@ -2387,6 +2387,11 @@ function addJob() {
   });
   document.getElementById('j-predamage').value = '';
   renderJobs();
+  const _toast = document.createElement('div');
+  _toast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:var(--positive);color:#000;border-radius:var(--radius);padding:12px 18px;font-family:var(--font);font-size:13px;font-weight:700;z-index:999';
+  _toast.textContent = '✓ Job added';
+  document.body.appendChild(_toast);
+  setTimeout(() => _toast.remove(), 3000);
 }
 
 function ticketId6() {
@@ -2443,15 +2448,15 @@ async function shareTicket(jobId) {
     text: 'Hi ' + (j.customer || 'there') + ', here\'s your Pixel Patcher repair agreement for ' + device + '. Please review and tap "I Agree" to authorize the repair:\n',
     url,
   };
-  if (navigator.share) {
-    try { await navigator.share(shareData); } catch(e) { /* user cancelled */ }
-  } else {
-    try {
-      await navigator.clipboard.writeText(url);
-      alert('Ticket link copied to clipboard:\n' + url);
-    } catch(e) {
-      alert('Ticket link:\n' + url);
-    }
+  if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+    try { await navigator.share(shareData); return; } catch(e) { /* user cancelled or share failed */ }
+  }
+  // Desktop fallback: copy to clipboard
+  try {
+    await navigator.clipboard.writeText(url);
+    alert('Ticket link copied to clipboard:\n' + url);
+  } catch(e) {
+    alert('Ticket link:\n' + url);
   }
 }
 
