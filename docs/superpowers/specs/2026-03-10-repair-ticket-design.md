@@ -67,7 +67,11 @@ A unified `ticket.html` page that:
 
 ## Data Architecture
 
-Tickets are **not** a separate Firestore collection — they are read directly from the existing `jobs` collection using `ticketId` as a lookup field. The `ticket.html` page queries `jobs` where `ticketId == <id>`. No auth required for reading ticket data (Firestore rules: allow read if `ticketId` matches).
+Tickets use a **separate `tickets` Firestore collection** at the root level (not under `users/{uid}`). This is required because jobs are stored as arrays inside single Firestore documents at `users/{uid}/data/pp_jobs` — they are not individually queryable documents. A separate `tickets` collection allows public unauthenticated reads without exposing any of Jason's private financial data.
+
+When Jason generates a ticket from a job, the accounting app writes a snapshot of the relevant job fields to `tickets/{ticketId}`. When job status changes, the app syncs the new status to `tickets/{ticketId}`. The `ticket.html` page reads `tickets/{ticketId}` directly by document ID — no query needed.
+
+**Ticket document fields:** `ticketId`, `jobId`, `customer`, `phone`, `device`, `issue`, `estimatedPrice`, `estimatedCompletion`, `preDamage`, `status`, `customerAcknowledged`, `acknowledgedAt`, `createdAt`
 
 ## Share Message
 
