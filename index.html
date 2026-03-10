@@ -90,6 +90,32 @@
     .nav-links a:hover { color: var(--gold); }
 
     canvas { display: block; width: 100%; }
+    /* ── STICKY MOBILE CTA ── */
+    .sticky-book {
+      display: none;
+    }
+    @media (max-width: 768px) {
+      .sticky-book {
+        display: flex;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 200;
+        justify-content: center;
+        align-items: center;
+        background: var(--gold);
+        color: #000;
+        font-family: var(--font-pixel);
+        font-size: 10px;
+        padding: 14px 16px;
+        letter-spacing: 1px;
+        text-decoration: none;
+        border-top: 2px solid #a88000;
+      }
+      /* prevent content from hiding behind fixed bar */
+      body { padding-bottom: 52px; }
+    }
 
     /* ── HERO ── */
     #hero {
@@ -1274,5 +1300,6 @@ document.getElementById('booking-form').addEventListener('submit', async functio
     });
   })();
 </script>
+  <a class="sticky-book" href="#booking">&#128197; BOOK A REPAIR</a>
 </body>
 </html>
