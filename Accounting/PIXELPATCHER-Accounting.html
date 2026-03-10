@@ -599,6 +599,7 @@ const JOB_STATUSES = ['Pending','In Progress','Complete','Awaiting Parts','Close
 
 // ── Job filter state ──────────────────────────────────────────────────────────
 let _jobFilter = 'All';
+let _jobSearch = '';
 
 function optionsHTML(arr, selected = '') {
   return arr.map(v =>
@@ -2130,7 +2131,14 @@ function renderJobs() {
   document.getElementById('jobs').innerHTML = `
     <div class="section-header">
       <div class="page-title">Jobs</div>
-      <button class="btn btn-primary" onclick="toggleForm('job-form')">+ New Job</button>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <input type="search" placeholder="Search jobs…" value="${esc(_jobSearch)}"
+          oninput="_jobSearch=this.value;renderJobs()"
+          style="background:var(--card);border:1px solid var(--border);color:var(--text);
+                 border-radius:var(--radius);padding:8px 14px;font-size:13px;
+                 font-family:var(--font);width:200px">
+        <button class="btn btn-primary" onclick="toggleForm('job-form')">+ New Job</button>
+      </div>
     </div>
     <div class="add-form" id="job-form">
       <div class="form-grid">
@@ -2220,7 +2228,15 @@ function renderJobs() {
         ${jobs.length === 0
           ? '<tr><td colspan="9" style="color:var(--muted);text-align:center;padding:32px">No jobs yet &mdash; your first one is coming!</td></tr>'
           : (() => {
-              const filtered = _jobFilter === 'All' ? jobs : jobs.filter(j => j.status === _jobFilter);
+              const filtered = (_jobFilter === 'All' ? jobs : jobs.filter(j => j.status === _jobFilter))
+                .filter(j => {
+                  if (!_jobSearch.trim()) return true;
+                  const q = _jobSearch.toLowerCase();
+                  return (j.customer || '').toLowerCase().includes(q)
+                    || (j.issue    || '').toLowerCase().includes(q)
+                    || (j.device   || '').toLowerCase().includes(q)
+                    || (j.service  || '').toLowerCase().includes(q);
+                });
               return filtered.slice().reverse().map((j, i) => {
               const num          = filtered.length - i;
               const expCount     = linkedExpenseCount[j.id] || 0;
