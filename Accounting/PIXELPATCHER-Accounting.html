@@ -2182,6 +2182,8 @@ function renderJobs() {
           <input id="j-device" placeholder="iPhone, MacBook, etc."></div>
         <div class="form-group"><label>Model <span style="color:var(--muted);font-weight:400">(optional)</span></label>
           <input id="j-model" placeholder="iPhone 13, MacBook Air M2, etc."></div>
+        <div class="form-group" style="grid-column:span 2"><label>Pre-existing Damage</label>
+          <input id="j-predamage" placeholder="Scratched screen, missing screws, etc." style="width:100%;box-sizing:border-box"></div>
         <div class="form-group" style="grid-column:span 2"><label>Internal Notes <span style="color:var(--muted);font-weight:400">(optional, not on invoice)</span></label>
           <textarea id="j-notes" rows="2" style="width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:8px;color:var(--text);font-family:var(--font);font-size:13px;resize:vertical" placeholder="Tech notes, customer info, anything internal"></textarea></div>
       </div>
@@ -2374,9 +2376,11 @@ function addJob() {
     status:  document.getElementById('j-status').value,
     device:  document.getElementById('j-device').value.trim(),
     model:   document.getElementById('j-model').value.trim(),
-    notes:   document.getElementById('j-notes').value.trim(),
+    notes:     document.getElementById('j-notes').value.trim(),
+    preDamage: document.getElementById('j-predamage').value.trim(),
     paid: false,
   });
+  document.getElementById('j-predamage').value = '';
   renderJobs();
 }
 
@@ -2486,6 +2490,8 @@ function editJob(id) {
         <input id="jm-device" value="${esc(j.device || '')}"></div>
       <div class="form-group"><label>Model</label>
         <input id="jm-model" value="${esc(j.model || '')}"></div>
+      <div class="form-group" style="grid-column:span 2"><label>Pre-existing Damage</label>
+        <input id="jm-predamage" value="${esc(j.preDamage || '')}" placeholder="Scratched screen, missing screws, etc." style="width:100%;box-sizing:border-box"></div>
       <div class="form-group" style="grid-column:span 2"><label>Internal Notes</label>
         <textarea id="jm-notes" rows="2" style="width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:8px;color:var(--text);font-family:var(--font);font-size:13px;resize:vertical">${esc(j.notes || '')}</textarea></div>
     </div>
@@ -2540,7 +2546,8 @@ function saveEditJob(id) {
     status:  document.getElementById('jm-status').value,
     device:  document.getElementById('jm-device').value.trim(),
     model:   document.getElementById('jm-model').value.trim(),
-    notes:   document.getElementById('jm-notes').value.trim(),
+    notes:     document.getElementById('jm-notes').value.trim(),
+    preDamage: document.getElementById('jm-predamage').value.trim(),
   })));
   closeEditModal();
   renderJobs();
