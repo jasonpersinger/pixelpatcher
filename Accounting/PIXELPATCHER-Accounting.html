@@ -2271,6 +2271,11 @@ function renderJobs() {
                          onclick="openReceiptModal('${esc(j.id)}','pp_jobs',renderJobs,'photoUrl')">+ Photo</button>`}
                   <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px"
                     onclick="openFollowupModal('${esc(j.customer)}','${esc(j.phone)}')">Follow-up</button>
+                  ${j.ticketId
+                    ? `<button class="btn btn-ghost" style="font-size:11px;padding:4px 10px;color:var(--gold)"
+                         onclick="shareTicket('${esc(j.id)}')">&#x1F4CB; Send</button>`
+                    : `<button class="btn btn-ghost" style="font-size:11px;padding:4px 10px"
+                         onclick="generateTicket('${esc(j.id)}')">Ticket</button>`}
                   <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px"
                     onclick="editJob('${esc(j.id)}')">&#x270E;</button>
                   <button class="btn btn-danger" onclick="deleteJob('${esc(j.id)}')">&#x2715;</button>
@@ -2382,6 +2387,78 @@ function addJob() {
   });
   document.getElementById('j-predamage').value = '';
   renderJobs();
+}
+
+function ticketId6() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let id = '';
+  for (let i = 0; i < 6; i++) id += chars[Math.floor(Math.random() * chars.length)];
+  return id;
+}
+
+async function generateTicket(jobId) {
+  const jobs = DB.get('pp_jobs') || [];
+  const j = jobs.find(x => x.id === jobId);
+  if (!j) return null;
+  const tId = j.ticketId || ticketId6();
+  const ticketData = {
+    ticketId: tId,
+    jobId: jobId,
+    customer: j.customer || '',
+    phone: j.phone || '',
+    device: [j.device, j.model].filter(Boolean).join(' ') || '',
+    issue: j.issue || '',
+    estimatedPrice: Number(j.labor || 0) + Number(j.parts || 0) + Number(j.tax || 0),
+    estimatedCompletion: j.date || '',
+    preDamage: j.preDamage || '',
+    status: j.status || 'Pending',
+    customerAcknowledged: j.customerAcknowledged || false,
+    acknowledgedAt: j.acknowledgedAt || null,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+  };
+  try {
+    await fsdb.collection('tickets').doc(tId).set(ticketData, { merge: true });
+  } catch(err) {
+    console.warn('Ticket write failed:', err);
+  }
+  // Save ticketId to job if new
+  if (!j.ticketId) {
+    DB.set('pp_jobs', jobs.map(x => x.id === jobId ? Object.assign({}, x, { ticketId: tId }) : x));
+    renderJobs();
+  }
+  return tId;
+}
+
+async function shareTicket(jobId) {
+  const jobs = DB.get('pp_jobs') || [];
+  const j = jobs.find(x => x.id === jobId);
+  if (!j) return;
+  // Ensure ticket exists in Firestore (await so doc is ready before sharing)
+  const tId = await generateTicket(jobId);
+  if (!tId) { alert('Could not generate ticket. Check your connection.'); return; }
+  const url = 'https://pixelpatcher.netlify.app/ticket.html?id=' + tId;
+  const device = [j.device, j.model].filter(Boolean).join(' ') || 'your device';
+  const shareData = {
+    title: 'Pixel Patcher Repair Ticket',
+    text: 'Hi ' + (j.customer || 'there') + ', here\'s your Pixel Patcher repair agreement for ' + device + '. Please review and tap "I Agree" to authorize the repair:\n',
+    url,
+  };
+  if (navigator.share) {
+    try { await navigator.share(shareData); } catch(e) { /* user cancelled */ }
+  } else {
+    try {
+      await navigator.clipboard.writeText(url);
+      alert('Ticket link copied to clipboard:\n' + url);
+    } catch(e) {
+      alert('Ticket link:\n' + url);
+    }
+  }
+}
+
+function syncTicketStatus(j) {
+  if (!j || !j.ticketId) return;
+  fsdb.collection('tickets').doc(j.ticketId).update({ status: j.status })
+    .catch(err => console.warn('Ticket status sync failed:', err));
 }
 
 function sendJobReadyEmail(job) {
@@ -2549,6 +2626,8 @@ function saveEditJob(id) {
     notes:     document.getElementById('jm-notes').value.trim(),
     preDamage: document.getElementById('jm-predamage').value.trim(),
   })));
+  const _updatedJob = (DB.get('pp_jobs') || []).find(x => x.id === id);
+  if (_updatedJob) syncTicketStatus(_updatedJob);
   closeEditModal();
   renderJobs();
 }
