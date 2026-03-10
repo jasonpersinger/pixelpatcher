@@ -36,18 +36,9 @@
       padding: 32px 16px;
     }
 
-    .card {
-      max-width: 420px;
-      width: 100%;
-      text-align: center;
-    }
+    .card { max-width: 420px; width: 100%; text-align: center; }
 
-    .logo {
-      width: 160px;
-      height: auto;
-      margin: 0 auto 28px;
-      display: block;
-    }
+    .logo { width: 160px; height: auto; margin: 0 auto 28px; display: block; }
 
     .heading {
       font-family: var(--font-pixel);
@@ -57,12 +48,7 @@
       margin-bottom: 16px;
     }
 
-    .message {
-      font-size: 15px;
-      color: var(--gray);
-      line-height: 1.6;
-      margin-bottom: 28px;
-    }
+    .message { font-size: 15px; color: var(--gray); line-height: 1.6; margin-bottom: 28px; }
 
     .active-info {
       background: var(--dim);
@@ -78,21 +64,9 @@
 
     .active-info strong { color: var(--white); }
 
-    .form {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      margin-bottom: 20px;
-      text-align: left;
-    }
+    .form { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; text-align: left; }
 
-    .form label {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      font-size: 12px;
-      color: var(--gray);
-    }
+    .form label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--gray); }
 
     .form input {
       background: var(--dim);
@@ -105,9 +79,27 @@
       width: 100%;
     }
 
-    .form input:focus {
-      outline: none;
+    .form input:focus { outline: none; border-color: var(--gold); }
+
+    .quick-picks { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+
+    .pick-btn {
+      padding: 8px 14px;
+      background: var(--dim);
+      border: 1px solid #333;
+      border-radius: 20px;
+      color: var(--gray);
+      font-family: var(--font-body);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .pick-btn.selected {
+      background: var(--gold);
       border-color: var(--gold);
+      color: var(--black);
+      font-weight: 700;
     }
 
     .summary {
@@ -130,6 +122,7 @@
     .summary-row:last-child { border-bottom: none; }
     .summary-row .label { color: var(--gray); }
     .summary-row .value { color: var(--white); font-weight: 500; }
+    .summary-row .value.highlight { color: var(--gold); }
 
     .btn-gold {
       display: block;
@@ -168,6 +161,9 @@
 
     .btn-ghost:hover { color: var(--gold); border-color: var(--gold); }
 
+    .monthly-total { font-size: 13px; color: var(--gray); margin-bottom: 20px; }
+    .monthly-total strong { color: var(--gold); }
+
     .hidden { display: none !important; }
   </style>
 </head>
@@ -194,7 +190,20 @@
     <div class="form">
       <label>Date<input type="date" id="start-date"></label>
       <label>From<input type="text" id="start-from" placeholder="Starting location"></label>
-      <label>Purpose<input type="text" id="start-purpose" placeholder="Reason for trip"></label>
+      <label>Odometer Start<input type="number" step="0.1" min="0" id="start-odom" placeholder="45210.0"></label>
+      <div>
+        <div style="font-size:12px;color:var(--gray);margin-bottom:8px">Purpose</div>
+        <div class="quick-picks" id="purpose-picks">
+          <button class="pick-btn" data-purpose="Client Visit">Client Visit</button>
+          <button class="pick-btn" data-purpose="Supply Run">Supply Run</button>
+          <button class="pick-btn" data-purpose="Bank/Post Office">Bank/Post Office</button>
+          <button class="pick-btn" data-purpose="Other">Other</button>
+        </div>
+        <input type="text" id="purpose-other" placeholder="Describe purpose…"
+          style="margin-top:10px;background:var(--dim);border:1px solid #333;border-radius:6px;
+                 color:var(--white);font-family:var(--font-body);font-size:15px;
+                 padding:10px 12px;width:100%;display:none">
+      </div>
     </div>
     <button id="btn-start" class="btn-gold">Start Trip</button>
   </div>
@@ -205,11 +214,12 @@
     <h1 class="heading">End Trip</h1>
     <div class="active-info">
       From: <strong id="end-from-display"></strong><br>
-      Purpose: <strong id="end-purpose-display"></strong>
+      Purpose: <strong id="end-purpose-display"></strong><br>
+      Odometer Start: <strong id="end-odom-display"></strong>
     </div>
     <div class="form">
       <label>To<input type="text" id="end-to" placeholder="Destination"></label>
-      <label>Miles<input type="number" step="0.1" min="0" id="end-miles" placeholder="0.0"></label>
+      <label>Odometer End<input type="number" step="0.1" min="0" id="end-odom" placeholder="45222.0"></label>
       <label>Notes<input type="text" id="end-notes" placeholder="Optional"></label>
     </div>
     <button id="btn-end" class="btn-gold">Review Entry</button>
@@ -225,8 +235,10 @@
       <div class="summary-row"><span class="label">From</span><span class="value" id="cf-from"></span></div>
       <div class="summary-row"><span class="label">To</span><span class="value" id="cf-to"></span></div>
       <div class="summary-row"><span class="label">Purpose</span><span class="value" id="cf-purpose"></span></div>
-      <div class="summary-row"><span class="label">Miles</span><span class="value" id="cf-miles"></span></div>
-      <div class="summary-row"><span class="label">Deduction</span><span class="value" id="cf-deduction"></span></div>
+      <div class="summary-row"><span class="label">Odom Start</span><span class="value" id="cf-odom-start"></span></div>
+      <div class="summary-row"><span class="label">Odom End</span><span class="value" id="cf-odom-end"></span></div>
+      <div class="summary-row"><span class="label">Miles</span><span class="value highlight" id="cf-miles"></span></div>
+      <div class="summary-row"><span class="label">Est. Deduction</span><span class="value highlight" id="cf-deduction"></span></div>
       <div class="summary-row hidden" id="cf-notes-row"><span class="label">Notes</span><span class="value" id="cf-notes"></span></div>
     </div>
     <button id="btn-save" class="btn-gold">Save to Mileage Log</button>
@@ -238,6 +250,7 @@
     <img src="Branding/pixelpatcherLOGO.png" alt="Pixel Patcher" class="logo">
     <h1 class="heading">Trip Saved!</h1>
     <p class="message"><span id="saved-miles"></span> miles logged.</p>
+    <p class="monthly-total" id="monthly-total"></p>
     <a href="https://pixelpatcher-accounting.web.app/PIXELPATCHER-Accounting.html" class="btn-gold">Open Accounting App</a>
     <button id="btn-new" class="btn-ghost">Log Another Trip</button>
   </div>
@@ -268,6 +281,19 @@
       document.getElementById('state-' + name).classList.remove('hidden');
     }
 
+    // Purpose quick-picks
+    let selectedPurpose = '';
+    document.querySelectorAll('.pick-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.pick-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        selectedPurpose = btn.dataset.purpose;
+        const otherInput = document.getElementById('purpose-other');
+        otherInput.style.display = selectedPurpose === 'Other' ? '' : 'none';
+        if (selectedPurpose === 'Other') otherInput.focus();
+      });
+    });
+
     // Sign-in
     document.getElementById('btn-signin').addEventListener('click', () => {
       fsauth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(err => {
@@ -283,6 +309,7 @@
       if (active) {
         document.getElementById('end-from-display').textContent    = active.from;
         document.getElementById('end-purpose-display').textContent = active.purpose;
+        document.getElementById('end-odom-display').textContent    = active.odomStart;
         showState('end');
       } else {
         document.getElementById('start-date').value = today();
@@ -292,13 +319,20 @@
 
     // Start trip
     document.getElementById('btn-start').addEventListener('click', () => {
-      const date    = document.getElementById('start-date').value;
-      const from    = document.getElementById('start-from').value.trim();
-      const purpose = document.getElementById('start-purpose').value.trim();
-      if (!date || !from || !purpose) { alert('Please fill in all fields.'); return; }
-      localStorage.setItem(TRIP_KEY, JSON.stringify({ date, from, purpose }));
+      const date      = document.getElementById('start-date').value;
+      const from      = document.getElementById('start-from').value.trim();
+      const odomStart = parseFloat(document.getElementById('start-odom').value);
+      const purpose   = selectedPurpose === 'Other'
+        ? document.getElementById('purpose-other').value.trim()
+        : selectedPurpose;
+      if (!date || !from || isNaN(odomStart) || odomStart <= 0) {
+        alert('Please fill in date, starting location, and odometer reading.'); return;
+      }
+      if (!purpose) { alert('Please select a purpose.'); return; }
+      localStorage.setItem(TRIP_KEY, JSON.stringify({ date, from, purpose, odomStart }));
       document.getElementById('end-from-display').textContent    = from;
       document.getElementById('end-purpose-display').textContent = purpose;
+      document.getElementById('end-odom-display').textContent    = odomStart;
       showState('end');
     });
 
@@ -306,22 +340,35 @@
     document.getElementById('btn-cancel').addEventListener('click', () => {
       if (!confirm('Cancel this trip? Start data will be lost.')) return;
       localStorage.removeItem(TRIP_KEY);
-      document.getElementById('start-date').value      = today();
-      document.getElementById('start-from').value      = '';
-      document.getElementById('start-purpose').value   = '';
+      resetStartForm();
       showState('start');
     });
 
+    function resetStartForm() {
+      document.getElementById('start-date').value    = today();
+      document.getElementById('start-from').value    = '';
+      document.getElementById('start-odom').value    = '';
+      document.getElementById('purpose-other').value = '';
+      document.getElementById('purpose-other').style.display = 'none';
+      document.querySelectorAll('.pick-btn').forEach(b => b.classList.remove('selected'));
+      selectedPurpose = '';
+    }
+
     let pendingEntry = null;
 
-    // End trip → review
+    // End trip -> review
     document.getElementById('btn-end').addEventListener('click', async () => {
-      const active = JSON.parse(localStorage.getItem(TRIP_KEY));
+      const active  = JSON.parse(localStorage.getItem(TRIP_KEY));
       if (!active) { showState('start'); return; }
-      const to    = document.getElementById('end-to').value.trim();
-      const miles = parseFloat(document.getElementById('end-miles').value);
-      const notes = document.getElementById('end-notes').value.trim();
-      if (!to || isNaN(miles) || miles <= 0) { alert('Please fill in destination and miles.'); return; }
+      const to      = document.getElementById('end-to').value.trim();
+      const odomEnd = parseFloat(document.getElementById('end-odom').value);
+      const notes   = document.getElementById('end-notes').value.trim();
+      if (!to || isNaN(odomEnd) || odomEnd <= 0) {
+        alert('Please fill in destination and ending odometer reading.'); return;
+      }
+      const miles = parseFloat((odomEnd - active.odomStart).toFixed(1));
+      if (miles <= 0) { alert('Odometer end must be greater than odometer start.'); return; }
+      if (miles > 500) { alert('That\'s over 500 miles \u2014 double-check your odometer readings.'); return; }
 
       let rate = DEFAULT_RATE;
       try {
@@ -331,15 +378,20 @@
       } catch (e) { /* use default */ }
 
       const deduction = parseFloat((miles * rate).toFixed(2));
-      pendingEntry = { id: uid(), date: active.date, from: active.from, to, purpose: active.purpose, miles, deduction, notes };
+      pendingEntry = {
+        id: uid(), date: active.date, from: active.from, to,
+        purpose: active.purpose, odomStart: active.odomStart, odomEnd, miles, deduction, notes
+      };
 
-      document.getElementById('cf-date').textContent      = active.date;
-      document.getElementById('cf-from').textContent      = active.from;
-      document.getElementById('cf-to').textContent        = to;
-      document.getElementById('cf-purpose').textContent   = active.purpose;
-      document.getElementById('cf-miles').textContent     = miles + ' mi';
-      document.getElementById('cf-deduction').textContent = '$' + deduction;
-      document.getElementById('cf-notes').textContent     = notes;
+      document.getElementById('cf-date').textContent       = active.date;
+      document.getElementById('cf-from').textContent       = active.from;
+      document.getElementById('cf-to').textContent         = to;
+      document.getElementById('cf-purpose').textContent    = active.purpose;
+      document.getElementById('cf-odom-start').textContent = active.odomStart;
+      document.getElementById('cf-odom-end').textContent   = odomEnd;
+      document.getElementById('cf-miles').textContent      = miles + ' mi';
+      document.getElementById('cf-deduction').textContent  = '$' + deduction;
+      document.getElementById('cf-notes').textContent      = notes;
       document.getElementById('cf-notes-row').classList.toggle('hidden', !notes);
       showState('confirm');
     });
@@ -354,14 +406,22 @@
       btn.disabled    = true;
       btn.textContent = 'Saving...';
       try {
-        const user = fsauth.currentUser;
-        const ref  = fsdb.collection('users').doc(user.uid).collection('data').doc('pp_mileage');
-        const snap = await ref.get();
+        const user    = fsauth.currentUser;
+        const ref     = fsdb.collection('users').doc(user.uid).collection('data').doc('pp_mileage');
+        const snap    = await ref.get();
         const entries = snap.exists ? (snap.data().value || []) : [];
         entries.push(pendingEntry);
         await ref.set({ value: entries });
         localStorage.removeItem(TRIP_KEY);
-        document.getElementById('saved-miles').textContent = pendingEntry.miles;
+
+        const month = pendingEntry.date.slice(0, 7);
+        const monthlyMiles = entries
+          .filter(e => (e.date || '').startsWith(month))
+          .reduce((s, e) => s + Number(e.miles || 0), 0);
+
+        document.getElementById('saved-miles').textContent    = pendingEntry.miles;
+        document.getElementById('monthly-total').innerHTML    =
+          'This month: <strong>' + monthlyMiles.toFixed(1) + ' miles</strong>';
         pendingEntry = null;
         showState('saved');
       } catch (err) {
@@ -374,9 +434,7 @@
 
     // Log another
     document.getElementById('btn-new').addEventListener('click', () => {
-      document.getElementById('start-date').value    = today();
-      document.getElementById('start-from').value    = '';
-      document.getElementById('start-purpose').value = '';
+      resetStartForm();
       showState('start');
     });
   </script>
