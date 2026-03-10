@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Repair Ticket — Pixel Patcher</title>
+  <meta name="description" content="View your Pixel Patcher repair agreement and status.">
+  <link rel="icon" type="image/png" href="Branding/logoblack.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --black: #000000;
+      --gold:  #C9A000;
+      --white: #ffffff;
+      --gray:  #aaaaaa;
+      --dim:   #111111;
+      --dim2:  #1a1a1a;
+      --border:#2a2a2a;
+      --green: #22c55e;
+      --font-pixel: 'Press Start 2P', monospace;
+      --font-body:  'DM Sans', sans-serif;
+    }
+    body {
+      background: var(--black);
+      color: var(--white);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 40px 16px 60px;
+    }
+    .card { max-width: 480px; width: 100%; }
+    .logo { width: 140px; height: auto; margin: 0 auto 24px; display: block; }
+    .brand {
+      font-family: var(--font-pixel);
+      font-size: 9px;
+      color: var(--gold);
+      text-align: center;
+      margin-bottom: 6px;
+      letter-spacing: 0.04em;
+    }
+    .subtitle { text-align: center; font-size: 13px; color: var(--gray); margin-bottom: 32px; }
+    .section {
+      background: var(--dim);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    .section-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--gold);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 14px;
+    }
+    .field { margin-bottom: 12px; }
+    .field:last-child { margin-bottom: 0; }
+    .field-label { font-size: 11px; color: var(--gray); margin-bottom: 3px; }
+    .field-value { font-size: 15px; font-weight: 500; color: var(--white); }
+    .field-value.price { font-size: 22px; font-weight: 700; color: var(--gold); }
+    .agreement-text {
+      font-size: 12px;
+      color: var(--gray);
+      line-height: 1.7;
+      background: var(--dim2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 14px;
+      margin-bottom: 18px;
+    }
+    .btn-agree {
+      display: block;
+      width: 100%;
+      background: var(--gold);
+      color: var(--black);
+      border: none;
+      border-radius: 8px;
+      padding: 16px;
+      font-family: var(--font-pixel);
+      font-size: 10px;
+      cursor: pointer;
+      letter-spacing: 0.04em;
+    }
+    .btn-agree:active { opacity: 0.85; }
+    .btn-agree:disabled { opacity: 0.5; cursor: default; }
+    .ack-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(34,197,94,0.1);
+      border: 1px solid var(--green);
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 13px;
+      color: var(--green);
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+    .timeline { display: flex; flex-direction: column; gap: 0; }
+    .timeline-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 10px 0;
+      position: relative;
+    }
+    .timeline-step:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      left: 11px;
+      top: 32px;
+      bottom: -10px;
+      width: 2px;
+      background: var(--border);
+    }
+    .timeline-step.active::after { background: var(--gold); }
+    .timeline-step.done::after  { background: var(--green); }
+    .step-dot {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      background: var(--black);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      margin-top: 1px;
+    }
+    .timeline-step.done .step-dot   { background:var(--green); border-color:var(--green); color:var(--black); font-weight:700; }
+    .timeline-step.active .step-dot { background:var(--gold);  border-color:var(--gold);  color:var(--black); }
+    .step-label { font-size: 14px; font-weight: 500; color: var(--gray); padding-top: 2px; }
+    .timeline-step.done .step-label   { color: var(--green); }
+    .timeline-step.active .step-label { color: var(--white); font-weight: 700; }
+    .contact-link {
+      display: block;
+      text-align: center;
+      color: var(--gold);
+      font-size: 14px;
+      text-decoration: none;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-weight: 500;
+    }
+    .loading { text-align: center; color: var(--gray); font-size: 14px; padding: 60px 0; }
+    .error-msg { text-align: center; color: #f87171; font-size: 14px; padding: 40px 0; line-height: 1.6; }
+  </style>
+</head>
+<body>
+<div class="card">
+  <img src="Branding/logoblack.png" alt="Pixel Patcher" class="logo">
+  <div class="brand">PIXEL PATCHER</div>
+  <div class="subtitle">Repair Ticket</div>
+  <div id="root"><div class="loading">Loading your ticket…</div></div>
+</div>
+
+<script>
+  firebase.initializeApp({
+    apiKey: "AIzaSyD9DXFXJEudx4ODE-P1yYxAniM4jtqytJY",
+    authDomain: "pixelpatcher-accounting.firebaseapp.com",
+    projectId: "pixelpatcher-accounting",
+    storageBucket: "pixelpatcher-accounting.firebasestorage.app",
+    messagingSenderId: "1070850498937",
+    appId: "1:1070850498937:web:774c2fb89d1da372a00fa8"
+  });
+  const fsdb = firebase.firestore();
+
+  // Maps job status values to ordered timeline steps.
+  // Each step: { label, match: fn(status) => bool }
+  const TIMELINE = [
+    { label: 'Received',        match: () => true },
+    { label: 'In Progress',     match: s => ['In Progress','Warranty Claim'].includes(s) },
+    { label: 'Awaiting Parts',  match: s => s === 'Awaiting Parts' },
+    { label: 'Complete',        match: s => ['Complete','Closed'].includes(s) },
+  ];
+
+  function esc(s) {
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function fmt(n) { return '$' + Number(n || 0).toFixed(2); }
+
+  function fmtDate(s) {
+    if (!s) return '—';
+    const [y,m,d] = s.split('-');
+    if (!y) return s;
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return months[parseInt(m,10)-1] + ' ' + parseInt(d,10) + ', ' + y;
+  }
+
+  function currentStepIndex(status) {
+    // Walk backwards to find the last matching step
+    for (let i = TIMELINE.length - 1; i >= 0; i--) {
+      if (TIMELINE[i].match(status)) return i;
+    }
+    return 0;
+  }
+
+  function renderTimeline(status) {
+    const currentIdx = currentStepIndex(status);
+    return TIMELINE.map((step, i) => {
+      const done   = i < currentIdx;
+      const active = i === currentIdx;
+      const cls    = done ? 'done' : active ? 'active' : '';
+      const dot    = done ? '✓' : active ? '●' : '';
+      return `<div class="timeline-step ${cls}">
+        <div class="step-dot">${dot}</div>
+        <div class="step-label">${esc(step.label)}</div>
+      </div>`;
+    }).join('');
+  }
+
+  function renderTicket(t, ticketId) {
+    const ackDate = t.acknowledgedAt
+      ? (t.acknowledgedAt.toDate ? t.acknowledgedAt.toDate().toLocaleDateString() : '')
+      : '';
+
+    document.getElementById('root').innerHTML = `
+      <div class="section">
+        <div class="section-title">Device</div>
+        <div class="field">
+          <div class="field-label">Customer</div>
+          <div class="field-value">${esc(t.customer)}</div>
+        </div>
+        <div class="field">
+          <div class="field-label">Device</div>
+          <div class="field-value">${esc(t.device || '—')}</div>
+        </div>
+        <div class="field">
+          <div class="field-label">Issue</div>
+          <div class="field-value">${esc(t.issue)}</div>
+        </div>
+        ${t.preDamage ? `<div class="field">
+          <div class="field-label">Pre-existing damage noted</div>
+          <div class="field-value" style="color:var(--gray);font-size:13px">${esc(t.preDamage)}</div>
+        </div>` : ''}
+      </div>
+
+      <div class="section">
+        <div class="section-title">Estimate</div>
+        <div class="field">
+          <div class="field-label">Estimated price</div>
+          <div class="field-value price">${fmt(t.estimatedPrice)}</div>
+        </div>
+        ${t.estimatedCompletion ? `<div class="field">
+          <div class="field-label">Estimated completion</div>
+          <div class="field-value">${esc(fmtDate(t.estimatedCompletion))}</div>
+        </div>` : ''}
+      </div>
+
+      ${!t.customerAcknowledged ? `
+        <div class="section">
+          <div class="section-title">Authorization</div>
+          <div class="agreement-text">
+            By tapping "I Agree," you authorize Pixel Patcher to perform the described repair at the estimated price above. Final price may vary if additional issues are discovered — you will be contacted before any additional work proceeds. Pixel Patcher is not responsible for pre-existing damage noted above.
+          </div>
+          <button class="btn-agree" id="agree-btn" onclick="acknowledge('${esc(ticketId)}')">
+            I AGREE — AUTHORIZE REPAIR
+          </button>
+        </div>
+      ` : `
+        <div class="section">
+          <div class="section-title">Status</div>
+          <div class="ack-badge">✓ Authorized${ackDate ? ' · ' + ackDate : ''}</div>
+          <div class="timeline">${renderTimeline(t.status || 'Pending')}</div>
+        </div>
+        <a href="sms:+15403002577" class="contact-link">Questions? Text Jason</a>
+      `}
+    `;
+  }
+
+  async function acknowledge(ticketId) {
+    const btn = document.getElementById('agree-btn');
+    btn.disabled = true;
+    btn.textContent = 'SAVING…';
+    try {
+      await fsdb.collection('tickets').doc(ticketId).update({
+        customerAcknowledged: true,
+        acknowledgedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        status: 'In Progress',
+      });
+      // Reload to show status view
+      loadTicket(ticketId);
+    } catch(e) {
+      btn.disabled = false;
+      btn.textContent = 'I AGREE — AUTHORIZE REPAIR';
+      alert('Could not save. Please try again.');
+    }
+  }
+
+  async function loadTicket(ticketId) {
+    try {
+      const snap = await fsdb.collection('tickets').doc(ticketId).get();
+      if (!snap.exists) {
+        document.getElementById('root').innerHTML =
+          '<div class="error-msg">Ticket not found.<br>Please contact Jason at (540) 300-2577.</div>';
+        return;
+      }
+      renderTicket(snap.data(), ticketId);
+    } catch(e) {
+      document.getElementById('root').innerHTML =
+        '<div class="error-msg">Could not load ticket.<br>Check your connection and try again.</div>';
+    }
+  }
+
+  const ticketId = new URLSearchParams(location.search).get('id');
+  if (!ticketId) {
+    document.getElementById('root').innerHTML = '<div class="error-msg">No ticket ID provided.</div>';
+  } else {
+    loadTicket(ticketId);
+  }
+</script>
+</body>
+</html>
