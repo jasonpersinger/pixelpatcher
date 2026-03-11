@@ -1,0 +1,5 @@
+[[redirects]]
+  from   = "https://remote.pixelpatcher.com/*"
+  to     = "/remote/:splat"
+  status = 200
+  force  = true
