@@ -35,6 +35,10 @@
       display: flex; align-items: center; gap: 8px;
     }
     .nav-brand img { image-rendering: pixelated; }
+    .nav-links { display: flex; gap: 1.5rem; list-style: none; margin-left: auto; }
+    .nav-links a { font-family: var(--font-pixel); font-size: 7px; color: var(--gray); text-decoration: none; letter-spacing: 1px; transition: color 0.2s; }
+    .nav-links a:hover, .nav-links a.active { color: var(--gold); }
+    @media (max-width: 640px) { .nav-links { display: none; } }
     .hero {
       display: flex; flex-direction: column; align-items: center;
       text-align: center; padding: 72px 24px 56px;
@@ -93,6 +97,13 @@
       <img src="https://www.pixelpatcher.com/Branding/logoblack.png" width="18" height="18" alt="">
       PIXEL PATCHER
     </a>
+    <ul class="nav-links">
+      <li><a href="https://www.pixelpatcher.com/#services">Services</a></li>
+      <li><a href="https://www.pixelpatcher.com/#pricing">Pricing</a></li>
+      <li><a href="https://www.pixelpatcher.com/#about">About</a></li>
+      <li><a href="https://www.pixelpatcher.com/#contact">Contact</a></li>
+      <li><a href="https://remote.pixelpatcher.com" class="active">Remote Support</a></li>
+    </ul>
   </nav>
   <div class="hero">
     <h1>REMOTE SUPPORT</h1>
