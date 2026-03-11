@@ -1,3 +1,6 @@
+[build]
+  publish = "Branding"
+
 [[redirects]]
   from   = "https://remote.pixelpatcher.com/*"
   to     = "/remote/:splat"
