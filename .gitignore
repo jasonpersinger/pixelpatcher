@@ -1,3 +1,54 @@
 .worktrees/
 Accounting/functions/node_modules/
 Accounting/functions/.env
+
+# Tool/system dirs
+.playwright-mcp/
+Branding/.playwright-mcp/
+.stfolder/
+.superpowers/
+
+# Firebase debug logs
+firebase-debug.log
+Branding/firebase-debug.log
+
+# Untracked branding/generated assets (not needed in repo)
+Branding/PixelPatcher_BrandGuide.html
+Branding/PixelPatcher_BrandGuide.pdf
+Branding/PixelPatcher_FB_Banner.png
+Branding/PixelPatcher_GBP_Photo.png
+Branding/PixelPatcher_Instagram_Launch.png
+Branding/PixelPatcher_Instagram_Profile.png
+Branding/PixelPatcher_iPhone_Wallpaper.png
+Branding/cardimage.png
+Branding/cardimage2.png
+Branding/fb_banner_source.html
+Branding/flyer-image.png
+Branding/flyer.html
+Branding/gbp_photo_source.html
+Branding/instagram_launch_source.html
+Branding/iphone_wallpaper_source.html
+Branding/logoblack_large.png
+Branding/marketplace_flyer.html
+Branding/pixelpatcher-wallpaper-3840x2160.png
+Branding/pixelpatcher_header_chunky.png
+Branding/wallpaper-glow-pixel.png
+Branding/index.html
+Branding/PPatcherBusinessCardv2FINAL.pdf
+"Branding/pixel patcher.pdf"
+"Branding/pixel patcher (1).pdf"
+"Branding/pixelpatcherLOGO copy.png"
+
+# Misc
+GitHub_Profile_README.md
+Accounting/Screenshot_20260303_084601.png
+Accounting/.firebase/
+PixelPatcherRemoteSupport/PixelPatcherSupport.exe
+Business/
+Intake/
+docs/plans/
+
+# PDFs with special chars in names
+Branding/*.pdf
+Branding/Pixel*
+Branding/pixelpatcherLOGO copy.png
