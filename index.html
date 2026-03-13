@@ -610,6 +610,7 @@
     "image": "https://www.pixelpatcher.com/Branding/pixelpatcherLOGO.png",
     "logo": "https://www.pixelpatcher.com/Branding/pixelpatcherLOGO.png",
     "priceRange": "$$",
+    "paymentAccepted": "Cash, Credit Card, Debit Card, Venmo, PayPal, CashApp, Apple Pay, Zelle",
     "address": {
       "@type": "PostalAddress",
       "streetAddress": "709 Marshall Ave SW",
@@ -618,6 +619,20 @@
       "postalCode": "24016",
       "addressCountry": "US"
     },
+    "openingHoursSpecification": [
+      {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday"],
+        "opens": "08:00",
+        "closes": "18:00"
+      },
+      {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": "Saturday",
+        "opens": "09:00",
+        "closes": "13:00"
+      }
+    ],
     "areaServed": [
       "Roanoke, Virginia",
       "Roanoke County, Virginia",
@@ -651,30 +666,43 @@
     gtag('js', new Date());
     gtag('config', 'G-78WEV1YFCG');
   </script>
-  <!-- Structured data for Google -->
+
+  <!-- FAQ structured data — generates expandable rich results in Google -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "LocalBusiness",
-    "name": "Pixel Patcher",
-    "description": "Fast, local PC repair and upgrades in Roanoke, VA. Virus removal, data recovery, hardware diagnostics and more.",
-    "url": "https://www.pixelpatcher.com",
-    "telephone": "+15403002577",
-    "email": "jason@pixelpatcher.com",
-    "image": "https://www.pixelpatcher.com/Branding/pixelpatcherLOGO.png",
-    "priceRange": "$$",
-    "address": {
-      "@type": "PostalAddress",
-      "addressLocality": "Roanoke",
-      "addressRegion": "VA",
-      "addressCountry": "US"
-    },
-    "areaServed": [
-      "Roanoke", "Salem", "Vinton", "Botetourt County",
-      "Daleville", "Troutville", "Rocky Mount"
-    ],
-    "sameAs": [
-      "https://www.pixelpatcher.com"
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How long does a repair take?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Most software repairs are completed same day. Hardware turnaround depends on parts availability; we'll give you an honest estimate upfront." }
+      },
+      {
+        "@type": "Question",
+        "name": "Do you offer a warranty?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Yes. All labor is covered by a 60-day warranty. If the same issue returns within 60 days, we fix it free." }
+      },
+      {
+        "@type": "Question",
+        "name": "What if you can't fix it?",
+        "acceptedAnswer": { "@type": "Answer", "text": "You don't pay. Our No Fix, No Charge policy means if we can't resolve the issue, diagnostic and labor are on us. Drop-off diagnostics are always free." }
+      },
+      {
+        "@type": "Question",
+        "name": "How do I pay?",
+        "acceptedAnswer": { "@type": "Answer", "text": "We accept cash, all major credit and debit cards, Venmo, PayPal, CashApp, Apple Pay, and Zelle." }
+      },
+      {
+        "@type": "Question",
+        "name": "Do you work on Macs?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Yes. We service both Windows PCs and Macs. Mac hardware repair is billed at $85/hr." }
+      },
+      {
+        "@type": "Question",
+        "name": "Can you come to me?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Yes. In-home service is available throughout the Roanoke Valley. Travel is free within 25 miles and $25 flat for 25–50 miles." }
+      }
     ]
   }
   </script>
@@ -690,6 +718,12 @@
     <button onclick="this.parentElement.style.display='none'" aria-label="Dismiss banner"
       style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:#000;font-size:20px;cursor:pointer;line-height:1">&times;</button>
   </div>
+  <script>
+    // Hide Spring Special after June 20, 2026
+    if (new Date() > new Date('2026-06-20')) {
+      document.getElementById('promo-banner').style.display = 'none';
+    }
+  </script>
 
   <nav aria-label="Main navigation">
     <a class="nav-brand" href="#hero">
@@ -811,6 +845,7 @@
 
       </div>
       <p class="pricing-note">Parts billed at cost + 15–20% markup. Client approval required before ordering. 1 hour minimum on all on-site visits.</p>
+      <p class="pricing-note" style="margin-top:0.5rem;">Most software repairs completed same day. Hardware turnaround depends on parts availability. All labor backed by a <strong>60-day warranty</strong> — if the same issue returns, we fix it free.</p>
     </div>
   </section>
 
@@ -846,6 +881,18 @@
             <span style="font-size:0.85rem; color:var(--gray); line-height:1.8;">
               Serving: Roanoke · Roanoke County · Vinton · Salem · Botetourt County · Daleville · Troutville · Rocky Mount · Boone's Mill
             </span>
+          </div>
+          <div style="margin-top:1.25rem;">
+            <h3 style="font-size:0.7rem;margin-bottom:0.75rem;">HOURS</h3>
+            <div style="font-size:0.875rem;color:var(--gray);line-height:2;">
+              <div style="display:flex;justify-content:space-between;max-width:220px;"><span>Mon – Fri</span><span style="color:#fff;">8 AM – 6 PM</span></div>
+              <div style="display:flex;justify-content:space-between;max-width:220px;"><span>Saturday</span><span style="color:#fff;">9 AM – 1 PM</span></div>
+              <div style="display:flex;justify-content:space-between;max-width:220px;"><span>Sunday</span><span>Closed</span></div>
+            </div>
+          </div>
+          <div style="margin-top:1.25rem;">
+            <h3 style="font-size:0.7rem;margin-bottom:0.75rem;">WE ACCEPT</h3>
+            <p style="font-size:0.875rem;color:var(--gray);line-height:1.8;">Cash · Credit/Debit Card · Venmo · PayPal · CashApp · Apple Pay · Zelle</p>
           </div>
           <img src="Branding/QR-pixelpatcher.png" alt="Scan to visit pixelpatcher.com" style="width:120px; height:120px;">
         </div>
@@ -1039,6 +1086,65 @@ document.getElementById('booking-form').addEventListener('submit', async functio
 });
 </script>
 
+  <section id="faq" style="background:#0a0a0a;">
+    <div class="section-inner">
+      <h2 class="section-title">FAQ</h2>
+      <div class="section-divider"></div>
+      <div style="max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:0;">
+
+        <details style="border-bottom:1px solid #222;padding:1.1rem 0;">
+          <summary style="cursor:pointer;font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:700;color:#fff;list-style:none;display:flex;justify-content:space-between;align-items:center;">
+            How long does a repair take? <span style="color:var(--gold);font-size:1.2rem;margin-left:1rem;">+</span>
+          </summary>
+          <p style="margin-top:0.75rem;color:var(--gray);font-size:0.95rem;line-height:1.8;">Most software repairs — virus removal, tune-ups, OS fixes — are completed same day. Hardware jobs depend on parts availability; we'll give you an honest estimate upfront and keep you posted.</p>
+        </details>
+
+        <details style="border-bottom:1px solid #222;padding:1.1rem 0;">
+          <summary style="cursor:pointer;font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:700;color:#fff;list-style:none;display:flex;justify-content:space-between;align-items:center;">
+            Do you offer a warranty? <span style="color:var(--gold);font-size:1.2rem;margin-left:1rem;">+</span>
+          </summary>
+          <p style="margin-top:0.75rem;color:var(--gray);font-size:0.95rem;line-height:1.8;">Yes — all labor is covered by a <strong style="color:#fff;">60-day warranty</strong>. If the same issue comes back within 60 days of your repair, we fix it free. No runaround.</p>
+        </details>
+
+        <details style="border-bottom:1px solid #222;padding:1.1rem 0;">
+          <summary style="cursor:pointer;font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:700;color:#fff;list-style:none;display:flex;justify-content:space-between;align-items:center;">
+            What if you can't fix it? <span style="color:var(--gold);font-size:1.2rem;margin-left:1rem;">+</span>
+          </summary>
+          <p style="margin-top:0.75rem;color:var(--gray);font-size:0.95rem;line-height:1.8;">You don't pay. Our No Fix, No Charge policy means if we can't resolve the issue, the diagnostic and labor are on us. Drop-off diagnostics are always free.</p>
+        </details>
+
+        <details style="border-bottom:1px solid #222;padding:1.1rem 0;">
+          <summary style="cursor:pointer;font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:700;color:#fff;list-style:none;display:flex;justify-content:space-between;align-items:center;">
+            How do I pay? <span style="color:var(--gold);font-size:1.2rem;margin-left:1rem;">+</span>
+          </summary>
+          <p style="margin-top:0.75rem;color:var(--gray);font-size:0.95rem;line-height:1.8;">We accept cash, all major credit and debit cards, Venmo, PayPal, CashApp, Apple Pay, and Zelle. Pay whatever's easiest for you.</p>
+        </details>
+
+        <details style="border-bottom:1px solid #222;padding:1.1rem 0;">
+          <summary style="cursor:pointer;font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:700;color:#fff;list-style:none;display:flex;justify-content:space-between;align-items:center;">
+            Do you work on Macs? <span style="color:var(--gold);font-size:1.2rem;margin-left:1rem;">+</span>
+          </summary>
+          <p style="margin-top:0.75rem;color:var(--gray);font-size:0.95rem;line-height:1.8;">Yes. We service both Windows PCs and Macs. Mac hardware repair is billed at $85/hr due to the additional complexity involved.</p>
+        </details>
+
+        <details style="border-bottom:1px solid #222;padding:1.1rem 0;">
+          <summary style="cursor:pointer;font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:700;color:#fff;list-style:none;display:flex;justify-content:space-between;align-items:center;">
+            Can you come to me? <span style="color:var(--gold);font-size:1.2rem;margin-left:1rem;">+</span>
+          </summary>
+          <p style="margin-top:0.75rem;color:var(--gray);font-size:0.95rem;line-height:1.8;">Absolutely. In-home service is available throughout the Roanoke Valley. Travel is free within 25 miles, and $25 flat for 25–50 miles. A 1-hour minimum applies to all on-site visits.</p>
+        </details>
+
+        <details style="padding:1.1rem 0;">
+          <summary style="cursor:pointer;font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:700;color:#fff;list-style:none;display:flex;justify-content:space-between;align-items:center;">
+            How do I get started? <span style="color:var(--gold);font-size:1.2rem;margin-left:1rem;">+</span>
+          </summary>
+          <p style="margin-top:0.75rem;color:var(--gray);font-size:0.95rem;line-height:1.8;">Text or call <a href="tel:5403002577" style="color:var(--gold);">540-300-2577</a>, fill out the booking form above, or just drop by. We're at 709 Marshall Ave SW, Roanoke, VA 24016.</p>
+        </details>
+
+      </div>
+    </div>
+  </section>
+
   <section id="remote">
     <div class="section-inner" style="text-align:center;">
       <h2 class="section-title">REMOTE SUPPORT</h2>
@@ -1060,6 +1166,7 @@ document.getElementById('booking-form').addEventListener('submit', async functio
         <li><a href="#services">Services</a></li>
         <li><a href="#pricing">Pricing</a></li>
         <li><a href="#about">About</a></li>
+        <li><a href="#faq">FAQ</a></li>
         <li><a href="#contact">Contact</a></li>
         <li><a href="https://remote.pixelpatcher.com">Remote Support</a></li>
       </ul>
