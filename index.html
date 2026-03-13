@@ -943,6 +943,8 @@
       Tell us what's broken — we'll get it fixed.
     </p>
     <form id="booking-form" style="display:flex;flex-direction:column;gap:14px;text-align:left">
+      <!-- honeypot: bots fill this, humans don't -->
+      <input type="text" name="website" id="bk-honeypot" autocomplete="off" tabindex="-1" aria-hidden="true" style="display:none">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
         <div>
           <label style="font-size:12px;color:#7a6a50;display:block;margin-bottom:5px">Your Name *</label>
@@ -1039,6 +1041,18 @@ document.getElementById('booking-form').addEventListener('submit', async functio
   e.preventDefault();
   const status = document.getElementById('bk-status');
   const btn    = this.querySelector('button[type=submit]');
+
+  // Honeypot — bots fill the hidden field, humans don't
+  if (document.getElementById('bk-honeypot').value) return;
+
+  // Cooldown — prevent rapid resubmission
+  const lastSubmit = sessionStorage.getItem('bk-last-submit');
+  if (lastSubmit && Date.now() - parseInt(lastSubmit) < 30000) {
+    status.style.color = '#ef4444';
+    status.textContent = 'Please wait a moment before submitting again.';
+    return;
+  }
+
   const name   = document.getElementById('bk-name').value.trim();
   const phone  = document.getElementById('bk-phone').value.trim();
   const issue       = document.getElementById('bk-issue').value.trim();
@@ -1058,9 +1072,7 @@ document.getElementById('booking-form').addEventListener('submit', async functio
   btn.textContent = 'Sending\u2026';
   status.textContent = '';
   try {
-    const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-    await _bkDb.collection('bookingRequests').doc(id).set({
-      id,
+    await _bkDb.collection('bookingRequests').add({
       name,
       phone,
       email:         document.getElementById('bk-email').value.trim(),
@@ -1072,6 +1084,7 @@ document.getElementById('booking-form').addEventListener('submit', async functio
       createdAt:     new Date().toISOString(),
       processed:     false,
     });
+    sessionStorage.setItem('bk-last-submit', Date.now().toString());
     status.style.color = '#22c55e';
     status.textContent = "\u2713 Got it! We\u2019ll reach out shortly to confirm.";
     this.reset();
